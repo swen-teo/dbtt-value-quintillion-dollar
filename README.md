@@ -1,163 +1,155 @@
-# Valu$ B2B Wholesale Platform
+# Valu$ B2B Wholesale Platform 🛒
 
-A comprehensive B2B e-commerce platform for Valu$ Wholesale, designed to serve small retailers (mama shops) with a Buy Now Pay Later (BNPL) model and flexible tiered logistics.
+> **Transforming Singapore's Heartland Retail with Buy-Now-Pay-Later (BNPL) and Smart Logistics.**
 
-## 🎯 Key Features
+The Valu$ B2B Platform is a sophisticated, dual-sided e-commerce ecosystem designed to empower small retailers (mama shops) with flexible financing and tiered logistics. Built with a premium aesthetic and modern tech stack, it streamlines wholesale procurement while offering enterprise-grade management tools.
 
-### Customer Portal
-- **Product Discovery**: Browse 6 product categories with real-time search
-- **Buy Now Pay Later (BNPL)**: Split payments into 4 equal weekly installments with no interest
-- **Dual Payment Options**: Choose between cash price or BNPL pricing
-- **Smart Logistics**: 
-  - **Immediate Pickup**: Collect orders within 1 hour at Hub Outlets
-  - **Scheduled Pickup**: Choose from 69+ heartland outlets with 24-48 hour lead time
-- **Quick Order**: Bulk ordering system for fast restocking
-- **Order Tracking**: Monitor order status and pickup schedules
-- **Account Management**: View credit limits, payment schedules, and preferences
+---
 
-### Admin Portal
-- **Dashboard**: Real-time overview of orders, customers, and revenue
-- **Order Management**: Process and manage all customer orders
-- **Pickup Scheduling**: Route orders to appropriate outlets based on pickup type
-- **Inventory Oversight**: Monitor stock levels and alerts
+## ✨ Core Pillars
 
-## 🚀 Technology Stack
+### 💳 Financial Empowerment (BNPL)
+Access inventory without upfront capital. Our integrated **Buy-Now-Pay-Later** model allows shops to split payments into 4 interest-free weekly installments (25/25/25/25%), effectively bridging the cash flow gap for heartland businesses.
 
-- **React 18** with TypeScript
-- **React Router 7** for navigation
-- **Tailwind CSS v4** for styling
-- **Lucide React** for icons
-- **LocalStorage** for demo data persistence
+### 🚛 Tiered Logistics Engine
+*   **Immediate Pickup (Hub Outlets):** Ready within 1 hour at central distribution hubs for urgent restocking.
+*   **Scheduled Pickup (Heartland Outlets):** Optimized routing to 69+ neighborhood locations via daily replenishment trucks with a 24-48h lead time.
 
-## 📱 User Flows
+### 📈 AI-Driven Insights
+The Admin portal features predictive demand forecasting and dynamic pricing governance, allowing Valu$ to anticipate spikes and manage supplier PO plans with 90%+ confidence.
 
-### Customer Journey
-1. **Login** → Enter credentials to access the B2B portal
-2. **Shop** → Browse products with category filters and search
-3. **Product Details** → Select payment method (Cash/BNPL) and quantity
-4. **Cart** → Review items and adjust quantities
-5. **Checkout** → Choose pickup type and location
-6. **Order Tracking** → Monitor order status and pickup details
+---
 
-### Admin Journey
-1. **Admin Login** → Secure access to operations portal
-2. **Dashboard** → Overview of business metrics
-3. **Order Management** → Process orders (Confirm → Ready → Complete)
-4. **Pickup Scheduling** → Route scheduled orders to heartland outlets
+## 🛠️ Technology Stack
 
-## 🏪 Pickup System
+This project leverages the latest frontend technologies for a responsive, high-performance experience:
 
-### Immediate Pickup (Hub Outlets)
-- Ready within 1 hour
-- Available at 2 central hub locations
-- Best for urgent restocking needs
+*   **Framework:** [React 18](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
+*   **Routing:** [React Router 7](https://reactrouter.com/) (Data APIs & File-based patterns)
+*   **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (Next-gen utility-first CSS)
+*   **Animations:** [Framer Motion](https://www.framer.com/motion/) & [Motion](https://motion.dev/)
+*   **UI Components:** [Radix UI](https://www.radix-ui.com/) (Primitives) & [Shadcn/UI](https://ui.shadcn.com/)
+*   **Icons:** [Lucide React](https://lucide.dev/)
+*   **Visualization:** [Recharts](https://recharts.org/) for business intelligence dashboards
+*   **Build Tool:** [Vite 6](https://vitejs.dev/)
 
-### Scheduled Pickup (Heartland Outlets)
-- 24-48 hour lead time
-- Choose from 69+ neighborhood outlets
-- Orders routed via daily replenishment trucks
-- Customers select preferred pickup date
+---
 
-## 💳 BNPL Payment Model
+## 🚀 Getting Started
 
-- **No upfront capital required**: Pay 25% today, rest over 3 weeks
-- **No interest or hidden fees**: Transparent pricing
-- **Credit limit tracking**: Monitor available credit in real-time
-- **Automatic payment schedule**: Weekly installments
+### Prerequisites
+*   [Node.js](https://nodejs.org/) (v18.0 or higher)
+*   [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
 
-### Payment Example:
-- Product Cash Price: $22.50
-- BNPL Price: $23.63 (total)
-- Payment Schedule:
-  - Today: $5.91
-  - Week 2: $5.91
-  - Week 3: $5.91
-  - Week 4: $5.91
+### Installation
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-repo/valu-b2b-platform.git
+    cd valu-b2b-platform
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    pnpm install
+    ```
+3.  **Start development server:**
+    ```bash
+    npm run dev
+    ```
+4.  **Build for production:**
+    ```bash
+    npm run build
+    ```
 
-## 🎨 Design System
+---
 
-The platform uses the Figma design provided, featuring:
-- Primary Color: Orange (#FF6900)
-- Secondary Color: Blue (#155DFC)
-- Professional sidebar navigation
-- Product cards with savings indicators
-- Clear status badges and indicators
+## 📱 Platform Features
+
+### Customer Experience (B2B Portal)
+-   **Smart Catalog:** Filter by category, real-time search, and margin-at-a-glance indicators.
+-   **Quick Order:** Bulk restocking interface for repeat orders.
+-   **BNPL Calculator:** Individual product pages show exact payment schedules for either cash or credit paths.
+-   **Order Tracking:** Live status monitoring from *Pending* to *Collected*.
+-   **Valu$ Prime:** Subscription tier for waived logistics fees and extra 5% bulk discounts.
+-   **Auto-Pay & Credits:** Manage recurring payments and monitor store credit limits (CLP).
+
+### Admin Operations Portal (Enterprise)
+-   **BI Dashboard:** Real-time KPIs on revenue, pending registrations, and pickup volume.
+-   **Order Management:** State-machine based processing (Confirm → Ready → Complete).
+-   **Logistics Hub:** Dedicated views for Hub Collection vs. Heartland Routing optimization.
+-   **Demand Forecasting:** AI-driven predictions for peak uplift (e.g., school holidays) and stock cover analysis.
+-   **Pricing Governance:** Manage volume tiers, Prime policy registration, and credit limit risk scoring.
+
+---
+
+## 🗂️ Project Structure
+
+```text
+/src
+  /app
+    /components       # Atomic UI components (Buttons, Cards, Inputs)
+    /data            # Mock database (Products, Outlets, Tiers)
+    /layouts         # Shared shells (CustomerLayout, NewAdminLayout)
+    /pages           # Page-level components
+      /admin         # Admin analytics & operations pages
+    /types           # Shared TypeScript interfaces
+    /utils           # Business logic & formatting helpers
+    routes.ts        # Routing configuration (v7 Router)
+    App.tsx          # Main entry point
+  /assets            # Static images and brand assets
+  /imports           # Design system assets (Figma imports)
+  /styles            # Global CSS and Tailwind directives
+index.html           # HTML entry point
+vite.config.ts       # Vite build configuration
+package.json         # Dependency manifest
+```
+
+---
+
+## 🔄 User Journeys
+
+### The "Mama Shop" Flow
+1.  **Discovery:** Shop for high-margin staples (Beverages, Goods, etc.).
+2.  **Financing:** Choose **BNPL** at checkout to preserve cash flow.
+3.  **Logistics:** Select **Heartland Pickup** at the nearest neighborhood outlet.
+4.  **Collection:** Track order status and collect via QR/Confirmation code.
+
+### The "Operator" Flow
+1.  **Registration Check:** Approve new shops based on UEN and risk scores.
+2.  **Order Routing:** Dispatch scheduled orders to replenishment trucks.
+3.  **Analytics:** Review AI-focasted demand to adjust supplier PO plans.
+4.  **Governance:** Update bulk pricing tiers for seasonal campaigns.
+
+---
 
 ## 📊 Demo Credentials
 
 ### Customer Portal
-- Email: `demo@mamashop.com`
-- Password: `demo123`
+*   **Email:** `demo@mamashop.com`
+*   **Password:** `demo123`
 
 ### Admin Portal
-- Username: `admin`
-- Password: `admin123`
-
-## 🗂️ Project Structure
-
-```
-/src
-  /app
-    /components       # Reusable UI components
-    /data            # Mock data (products, outlets)
-    /layouts         # CustomerLayout, AdminLayout
-    /pages           # All page components
-      /admin         # Admin-specific pages
-    /types           # TypeScript interfaces
-    routes.ts        # React Router configuration
-    App.tsx          # Main app component
-  /imports           # Figma imported assets
-  /styles            # CSS files
-```
-
-## 🔑 Key Components
-
-### Customer Pages
-- `Login.tsx` - Customer authentication
-- `Shop.tsx` - Product catalog with filtering
-- `ProductDetails.tsx` - Product page with BNPL calculator
-- `Cart.tsx` - Shopping cart management
-- `Checkout.tsx` - Pickup selection and order placement
-- `QuickOrder.tsx` - Bulk ordering interface
-- `Account.tsx` - Customer profile and credit info
-- `OrderTracking.tsx` - Order status monitoring
-
-### Admin Pages
-- `AdminLogin.tsx` - Admin authentication
-- `AdminDashboard.tsx` - Business overview
-- `OrderManagement.tsx` - Order processing
-- `PickupScheduling.tsx` - Logistics routing
-
-## 🔄 Order Lifecycle
-
-1. **Pending** - Order placed by customer
-2. **Confirmed** - Admin confirms order
-3. **Ready** - Order ready for pickup
-4. **Completed** - Customer collected order
-
-## 📦 Logistics Flow
-
-### Immediate Pickup Orders
-Customer → Hub Outlet (1 hour)
-
-### Scheduled Pickup Orders
-Customer → Central Hub → Daily Replenishment Truck → Heartland Outlet (24-48h)
-
-## 🛠️ Future Enhancements
-
-- Supabase backend integration for real data
-- Real-time inventory updates
-- SMS/Email notifications for order status
-- Advanced routing optimization
-- Payment gateway integration
-- Customer loyalty program
-- Multi-language support
-- Mobile app version
-
-## 📄 License
-
-Proprietary - Valu$ Wholesale Platform
+*   **Username:** `admin`
+*   **Password:** `admin123`
 
 ---
 
-Built with ❤️ for Valu$ Wholesale
+## 🛠️ Future Roadmap
+
+-   **Backend Integration:** Connect Supabase/PostgreSQL for persistent real-time data.
+-   **IoT Integration:** Real-time truck GPS tracking for better heartland routing ETA.
+-   **Multi-Tenancy:** Support for diverse regional hubs beyond Singapore.
+-   **Financial API:** Direct integration with Stripe/Adyen for automated installment collection.
+-   **ML Model Refinement:** Real sentiment analysis on product feedback to drive procurement.
+
+---
+
+## 📄 License
+
+Proprietary License - © 2026 Valu$ Wholesale. All rights reserved.
+
+---
+
+Built with ❤️ for Singapore's Retail Ecosystem.
+
