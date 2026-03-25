@@ -1,10 +1,16 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { Package, Clipboard, Truck, TrendingUp, FileText, History } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { Package, Truck, ClipboardList, TrendingUp, AlertCircle, RefreshCw, ShoppingCart, Activity, CheckCircle } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [isSyncing, setIsSyncing] = useState(true);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setIsSyncing(false), 2200);
+    return () => clearTimeout(timer);
+  }, []);
   const handleExportReport = () => {
     const rows = [
       ['Product', 'Current Stock', 'Forecast Demand (7 days)', 'Action'],
@@ -29,191 +35,207 @@ export default function Dashboard() {
     { name: 'Soy Sauce 1L', value: 892, fill: '#ffe6cc' },
   ];
 
-  const priorityRestocks = [
-    { name: 'Cooking Oil 5L', stock: '165 units', forecast: '1,092 units', status: 'Draft PO', statusColor: 'text-[#ff6900]' },
-    { name: 'Rice 25kg Premium', stock: '231 units', forecast: '850 units', status: 'Draft PO', statusColor: 'text-[#ff6900]' },
-    { name: 'Instant Noodles Carton', stock: '203 units', forecast: '600 units', status: 'Auto-Order', statusColor: 'text-[#ff8534]' },
-    { name: 'Flour 1kg Bundle', stock: '801 units', forecast: '400 units', status: 'Draft PO', statusColor: 'text-[#ff6900]' },
+  const mockTrafficData = [
+    { day: 'Mon', orders: 120, deliveries: 45 },
+    { day: 'Tue', orders: 132, deliveries: 58 },
+    { day: 'Wed', orders: 101, deliveries: 42 },
+    { day: 'Thu', orders: 145, deliveries: 65 },
+    { day: 'Fri', orders: 180, deliveries: 88 },
+    { day: 'Sat', orders: 210, deliveries: 105 },
+    { day: 'Sun', orders: 160, deliveries: 70 },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f9f4ea] p-8">
+    <div className="min-h-screen bg-[#f9f4ea] relative font-sans">
+      {/* Premium Loading Overlay */}
+      {isSyncing && (
+        <div className="fixed inset-0 z-50 bg-[#1b2a4a] flex flex-col items-center justify-center transition-opacity duration-1000">
+           <div className="relative">
+              <div className="w-24 h-24 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="font-bold text-white text-xl">V$</p>
+              </div>
+           </div>
+           <h2 className="text-white font-bold text-2xl mt-8 animate-pulse">Synchronizing HQ Operations...</h2>
+           <p className="text-blue-300 mt-2">Connecting to Valu$ Multi-Store Data Engine</p>
+        </div>
+      )}
+
+      <div className={`p-8 transition-all duration-1000 ${isSyncing ? 'opacity-0 scale-95 blur-lg' : 'opacity-100 scale-100 blur-0'}`}>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-bold text-2xl text-[#1b2a4a]">Welcome back Valu$ 6767</h1>
+      <div className="mb-8 flex justify-between items-end">
+        <div>
+            <h1 className="font-bold text-3xl text-[#1b2a4a] mb-2">Headquarters Dashboard</h1>
+            <p className="text-[#6b7280]">Real-time operational overview for all Valu$ wholesale facilities.</p>
+        </div>
+        <div className="flex gap-4">
+            <button className="bg-white text-[#1b2a4a] border-2 border-gray-200 font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">
+                <RefreshCw className="w-5 h-5" />
+                Sync Operations
+            </button>
+            <button 
+                onClick={() => navigate('/admin/catalog/forecasting')}
+                className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white font-bold px-6 py-2.5 rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+            >
+                <Activity className="w-5 h-5" />
+                Forecasting Engine
+            </button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Primary KPI Row */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <p className="font-medium text-sm text-[#6b7280] mb-2">Total Revenue (MTD)</p>
-          <p className="font-bold text-[28px] text-[#1b2a4a] mb-2">$1.67M</p>
-          <div className="flex items-center gap-1 text-[#10b981]">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 13 13">
-              <path d="M6.5 0L13 13H0L6.5 0Z" />
-            </svg>
-            <p className="font-medium text-xs">+67% vs last month</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList className="w-16 h-16" /></div>
+          <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Orders Placed (MTD)</p>
+          <p className="font-extrabold text-4xl text-[#1b2a4a] mb-2">1,267</p>
+          <div className="flex items-center gap-2 text-green-600">
+            <TrendingUp className="w-4 h-4" />
+            <p className="font-bold text-sm">+14% vs last month</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <p className="font-medium text-sm text-[#6b7280] mb-2">Orders Today</p>
-          <p className="font-bold text-[28px] text-[#1b2a4a] mb-2">1,267</p>
-          <div className="flex items-center gap-1 text-[#10b981]">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 13 13">
-              <path d="M6.5 0L13 13H0L6.5 0Z" />
-            </svg>
-            <p className="font-medium text-xs">+6.7% vs yesterday</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10"><Package className="w-16 h-16" /></div>
+          <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Global Stock Level</p>
+          <p className="font-extrabold text-4xl text-[#1b2a4a] mb-2">452K</p>
+          <div className="flex items-center gap-2 text-green-600">
+            <TrendingUp className="w-4 h-4" />
+            <p className="font-bold text-sm">Healthy threshold</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <p className="font-medium text-sm text-[#6b7280] mb-2">Items Sold</p>
-          <p className="font-bold text-[28px] text-[#1b2a4a] mb-2">45,676</p>
-          <div className="flex items-center gap-1 text-[#10b981]">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 13 13">
-              <path d="M6.5 0L13 13H0L6.5 0Z" />
-            </svg>
-            <p className="font-medium text-xs">+4.2% vs last week</p>
-          </div>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10"><Truck className="w-16 h-16" /></div>
+          <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Upcoming Deliveries</p>
+          <p className="font-extrabold text-4xl text-[#ff6900] mb-2">184</p>
+          <p className="font-bold text-sm text-gray-500">Scheduled for next 48 hours</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="font-medium text-sm text-[#6b7280] mb-2">Low Stock Alerts</p>
-              <p className="font-bold text-[28px] text-[#ef4444]">23 Items</p>
+        <div className="bg-[#1b2a4a] rounded-2xl p-6 shadow-md border border-[#273a61] relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10"><AlertCircle className="w-16 h-16 text-white" /></div>
+          <p className="font-semibold text-sm text-blue-200 mb-2 uppercase tracking-wide">AI Forecast Alerts</p>
+          <p className="font-extrabold text-4xl text-white mb-2">23</p>
+          <p className="font-bold text-sm text-[#ff8534]">Products require drafting PO</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Chart Column */}
+        <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="font-bold text-xl text-[#1b2a4a]">Order vs Delivery Traffic</h3>
+                        <p className="text-sm text-gray-500">Weekly logistics throughput across all zones</p>
+                    </div>
+                </div>
+                <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={mockTrafficData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#1b2a4a" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#1b2a4a" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorDeliveries" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ff6900" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#ff6900" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <XAxis dataKey="day" stroke="#9CA3AF" tick={{fill: '#6B7280', fontWeight: 600}} axisLine={false} tickLine={false} />
+                            <YAxis stroke="#9CA3AF" tick={{fill: '#6B7280', fontWeight: 600}} axisLine={false} tickLine={false} />
+                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                            <Area type="monotone" dataKey="orders" stroke="#1b2a4a" strokeWidth={3} fillOpacity={1} fill="url(#colorOrders)" name="Orders Placed" />
+                            <Area type="monotone" dataKey="deliveries" stroke="#ff6900" strokeWidth={3} fillOpacity={1} fill="url(#colorDeliveries)" name="Deliveries Handled" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
-            <div className="w-12 h-12 bg-[#fee2e2] rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-[#ef4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            
+            {/* Quick Actions Bar */}
+            <div className="grid grid-cols-4 gap-4">
+                <button onClick={() => navigate('/admin/orders')} className="bg-white border-2 border-gray-100 p-4 rounded-xl font-bold text-[#1b2a4a] hover:border-[#1b2a4a] hover:shadow-md transition-all flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600"><ShoppingCart className="w-6 h-6" /></div>
+                    Process Inbound
+                </button>
+                <button onClick={() => navigate('/admin/pickup-scheduling')} className="bg-white border-2 border-gray-100 p-4 rounded-xl font-bold text-[#1b2a4a] hover:border-[#1b2a4a] hover:shadow-md transition-all flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-[#ff6900]"><Truck className="w-6 h-6" /></div>
+                    Dispatch Routes
+                </button>
+                <button onClick={() => navigate('/admin/catalog')} className="bg-white border-2 border-gray-100 p-4 rounded-xl font-bold text-[#1b2a4a] hover:border-[#1b2a4a] hover:shadow-md transition-all flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600"><Package className="w-6 h-6" /></div>
+                    Catalog Config
+                </button>
+                <button onClick={() => navigate('/admin/catalog/forecasting')} className="bg-white border-2 border-gray-100 p-4 rounded-xl font-bold text-[#1b2a4a] hover:border-[#ff6900] hover:shadow-md transition-all flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-[#fff1e6] rounded-full flex items-center justify-center text-[#ff6900]"><TrendingUp className="w-6 h-6" /></div>
+                    Smart Ordering
+                </button>
             </div>
-          </div>
+        </div>
+
+        {/* Right Sidebar List */}
+        <div className="space-y-8">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="font-bold text-lg text-[#1b2a4a] mb-5">Latest Orders Placed</h3>
+                <div className="space-y-4">
+                    {[
+                        { id: 'ORD-9982', time: '10 mins ago', val: '$4,250', status: 'Pending Route', icon: <ShoppingCart className="w-5 h-5"/> },
+                        { id: 'ORD-9981', time: '45 mins ago', val: '$1,890', status: 'Queued', icon: <ShoppingCart className="w-5 h-5"/> },
+                        { id: 'ORD-9980', time: '1 hour ago', val: '$8,400', status: 'Dispatching', icon: <Truck className="w-5 h-5"/> },
+                        { id: 'ORD-9979', time: '2 hours ago', val: '$3,120', status: 'Delivered', icon: <CheckCircle className="w-5 h-5 text-green-500"/> },
+                    ].map((tx) => (
+                        <div key={tx.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                    {tx.icon}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-[#1b2a4a] text-sm">{tx.id}</p>
+                                    <p className="text-xs text-gray-400">{tx.time}</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-bold text-gray-900 text-sm">{tx.val}</p>
+                                <p className="text-xs font-semibold text-blue-500">{tx.status}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <button className="w-full mt-4 py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-100 transition-colors">
+                    View All Orders
+                </button>
+            </div>
+
+            <div className="bg-gradient-to-br from-[#1b2a4a] to-[#2a3f70] rounded-2xl p-6 shadow-xl text-white">
+                <h3 className="font-bold text-xl mb-4">Urgent Forecasts</h3>
+                <p className="text-gray-300 text-sm mb-6 pb-6 border-b border-white/10">The AI model has detected high probability inventory shortages in 3 locations requiring your immediate approval.</p>
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <p className="font-bold text-white">Woodlands Hub</p>
+                            <p className="text-xs text-orange-400">Jasmine Green Tea (Crit: 5 Days)</p>
+                        </div>
+                        <p className="font-bold text-xl">+75%</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <p className="font-bold text-white">Jurong East</p>
+                            <p className="text-xs text-orange-400">Omega 6 Eggs (Crit: 2 Days)</p>
+                        </div>
+                        <p className="font-bold text-xl">+42%</p>
+                    </div>
+                </div>
+                <button 
+                    onClick={() => navigate('/admin/catalog/forecasting')}
+                    className="w-full mt-6 py-3 bg-[#ff6900] text-white font-bold text-sm rounded-xl shadow-[0_4px_14px_0_rgba(255,105,0,0.39)] hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(255,105,0,0.23)] transition-all"
+                >
+                    Review PO Drafts
+                </button>
+            </div>
         </div>
       </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-[1fr_400px] gap-6 mb-8">
-        {/* Top Selling Products Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <div className="mb-6">
-            <h3 className="font-bold text-lg text-[#1f2937] mb-1">Top Selling Products For This Month</h3>
-            <p className="text-sm text-[#6b7280]">Last 30 days • Click legends for a refreshing forecast</p>
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={chartData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" stroke="#9ca3af" />
-              <YAxis dataKey="name" type="category" width={150} stroke="#9ca3af" />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} />
-              <Tooltip />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="font-bold text-lg text-[#1f2937] mb-5">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => navigate('/admin/catalog')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <Package className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">New Product</p>
-            </button>
-            <button onClick={() => navigate('/admin/catalog/pricing')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <Clipboard className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">Update Pricing</p>
-            </button>
-            <button onClick={() => navigate('/admin/orders')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <Truck className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">Process Orders</p>
-            </button>
-            <button onClick={() => navigate('/admin/catalog/forecasting')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <TrendingUp className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">View Analytics</p>
-            </button>
-            <button onClick={handleExportReport} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <FileText className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">Export Report</p>
-            </button>
-            <button onClick={() => navigate('/admin/orders')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
-              <History className="w-8 h-8 text-[#ff6900] mb-2" />
-              <p className="font-medium text-xs text-center text-[#1f2937]">Order History</p>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Demand Forecast Section */}
-      <div className="bg-gradient-to-br from-[#27286f] to-[#1e1f5a] rounded-2xl p-8 mb-8 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="font-bold text-2xl text-white mb-2">AI Demand Forecast</h2>
-            <p className="text-base text-white/90">
-              High-confidence spike expected during school holidays
-            </p>
-          </div>
-          <button className="bg-white text-[#27286f] font-bold text-sm px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Generate Forecast
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-            <p className="font-bold text-3xl text-white mb-1">91%</p>
-            <p className="text-sm text-white/80">Forecast confidence</p>
-          </div>
-          <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-            <p className="font-bold text-3xl text-white mb-1">+31%</p>
-            <p className="text-sm text-white/80">Projected peak uplift</p>
-          </div>
-          <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-            <p className="font-bold text-3xl text-white mb-1">4</p>
-            <p className="text-sm text-white/80">Suppliers to notify next</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Priority Restock Alerts */}
-      <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-lg text-[#1f2937]">Priority Restock Alerts</h3>
-          <a href="/admin/catalog/forecasting" className="text-sm font-medium text-[#155dfc] hover:underline">
-            View All (23)
-          </a>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#e5e7eb]">
-                <th className="text-left py-3 px-4 font-medium text-xs text-[#6b7280] uppercase">Product Name</th>
-                <th className="text-left py-3 px-4 font-medium text-xs text-[#6b7280] uppercase">Current Stock</th>
-                <th className="text-left py-3 px-4 font-medium text-xs text-[#6b7280] uppercase">Forecast Demand (7 days)</th>
-                <th className="text-left py-3 px-4 font-medium text-xs text-[#6b7280] uppercase">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {priorityRestocks.map((item, index) => (
-                <tr key={index} className="border-b border-[#e5e7eb] hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <p className="font-medium text-sm text-[#1f2937]">{item.name}</p>
-                  </td>
-                  <td className="py-3 px-4">
-                    <p className="text-sm text-[#ff6900] font-medium">{item.stock}</p>
-                  </td>
-                  <td className="py-3 px-4">
-                    <p className="text-sm text-[#ff8534] font-medium">{item.forecast}</p>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`font-medium text-sm ${item.statusColor}`}>{item.status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
