@@ -10,14 +10,10 @@ export default function Checkout() {
   const [pickupType, setPickupType] = useState<'immediate' | 'scheduled'>('immediate');
   const [selectedOutlet, setSelectedOutlet] = useState<OutletLocation | null>(null);
   const [pickupDate, setPickupDate] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bnpl'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bnpl'>('card');
 
   useEffect(() => {
     loadCart();
-    // Set default date to 2 days from now
-    const defaultDate = new Date();
-    defaultDate.setDate(defaultDate.getDate() + 2);
-    setPickupDate(defaultDate.toISOString().split('T')[0]);
   }, []);
 
   const loadCart = () => {
@@ -94,6 +90,80 @@ export default function Checkout() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Payment Method Selection */}
+            <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+              <h2 className="font-bold text-xl text-[#101828] mb-4 flex items-center gap-2">
+                <CreditCard className="w-6 h-6 text-[#155dfc]" />
+                Select Payment Method
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  onClick={() => setPaymentMethod('bnpl')}
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    paymentMethod === 'bnpl'
+                      ? 'border-[#155dfc] bg-blue-50'
+                      : 'border-[#e5e7eb] hover:border-[#155dfc]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[#101828]">Buy Now, Pay Later (BNPL)</span>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      paymentMethod === 'bnpl' ? 'border-[#155dfc]' : 'border-gray-300'
+                    }`}>
+                      {paymentMethod === 'bnpl' && <div className="w-3 h-3 rounded-full bg-[#155dfc]" />}
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#6a7282]">Pay in 4 interest-free weekly installments.</p>
+                </div>
+
+                <div
+                  onClick={() => setPaymentMethod('card')}
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    paymentMethod === 'card'
+                      ? 'border-[#ff6900] bg-[#fff7ed]'
+                      : 'border-[#e5e7eb] hover:border-[#ff6900]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[#101828]">Credit / Debit Card</span>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      paymentMethod === 'card' ? 'border-[#ff6900]' : 'border-gray-300'
+                    }`}>
+                      {paymentMethod === 'card' && <div className="w-3 h-3 rounded-full bg-[#ff6900]" />}
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#6a7282]">Pay immediately securely with your card.</p>
+                </div>
+              </div>
+
+              {paymentMethod === 'card' && (
+                <div className="mt-6 border-t border-gray-100 pt-6">
+                  <h3 className="font-bold text-[#101828] mb-4">Enter Card Details</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+                      <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                        <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">CVC</label>
+                        <input type="password" placeholder="123" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
+                      <input type="text" placeholder="John Tan" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Pickup Type Selection */}
             <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
               <h2 className="font-bold text-xl text-[#101828] mb-4 flex items-center gap-2">
@@ -179,46 +249,48 @@ export default function Checkout() {
               )}
 
               {/* Outlet Selection */}
-              <div>
-                <h3 className="font-bold text-[#101828] mb-3">
-                  {pickupType === 'immediate' ? 'Hub Outlets (Immediate Pickup)' : 'All Outlets (Choose Your Nearest)'}
-                </h3>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {availableOutlets.map((outlet) => (
-                    <div
-                      key={outlet.id}
-                      onClick={() => setSelectedOutlet(outlet)}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedOutlet?.id === outlet.id
-                          ? 'border-[#ff6900] bg-[#fff7ed]'
-                          : 'border-[#e5e7eb] hover:border-[#ff6900]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-bold text-[#101828]">{outlet.name}</p>
-                            {outlet.type === 'hub' && (
-                              <span className="bg-[#ff6900] text-white text-xs px-2 py-0.5 rounded">
-                                HUB
-                              </span>
+              {(pickupType === 'immediate' || (pickupType === 'scheduled' && pickupDate !== '')) && (
+                <div>
+                  <h3 className="font-bold text-[#101828] mb-3">
+                    {pickupType === 'immediate' ? 'Hub Outlets (Immediate Pickup)' : 'All Outlets (Choose Your Nearest)'}
+                  </h3>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {availableOutlets.map((outlet) => (
+                      <div
+                        key={outlet.id}
+                        onClick={() => setSelectedOutlet(outlet)}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedOutlet?.id === outlet.id
+                            ? 'border-[#ff6900] bg-[#fff7ed]'
+                            : 'border-[#e5e7eb] hover:border-[#ff6900]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-bold text-[#101828]">{outlet.name}</p>
+                              {outlet.type === 'hub' && (
+                                <span className="bg-[#ff6900] text-white text-xs px-2 py-0.5 rounded">
+                                  HUB
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-[#6a7282]">{outlet.address}</p>
+                            {outlet.leadTime && (
+                              <p className="text-xs text-[#155dfc] mt-1">Lead time: {outlet.leadTime}</p>
                             )}
                           </div>
-                          <p className="text-sm text-[#6a7282]">{outlet.address}</p>
-                          {outlet.leadTime && (
-                            <p className="text-xs text-[#155dfc] mt-1">Lead time: {outlet.leadTime}</p>
-                          )}
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          selectedOutlet?.id === outlet.id ? 'border-[#ff6900]' : 'border-gray-300'
-                        }`}>
-                          {selectedOutlet?.id === outlet.id && <div className="w-3 h-3 rounded-full bg-[#ff6900]" />}
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            selectedOutlet?.id === outlet.id ? 'border-[#ff6900]' : 'border-gray-300'
+                          }`}>
+                            {selectedOutlet?.id === outlet.id && <div className="w-3 h-3 rounded-full bg-[#ff6900]" />}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
