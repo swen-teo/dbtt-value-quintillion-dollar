@@ -10,6 +10,9 @@ export default function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    /* Reset mock state on fresh login so it defaults to normal user */
+    sessionStorage.clear();
+    window.dispatchEvent(new Event('accountTypeChanged'));
     navigate('/customer/shop');
   };
 
