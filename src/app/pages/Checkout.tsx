@@ -1,0 +1,288 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { MapPin, Calendar, CreditCard, Banknote, CheckCircle } from 'lucide-react';
+import { products, outletLocations } from '../data/mockData';
+import { CartItem, OutletLocation } from '../types';
+
+export default function Checkout() {
+  const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [pickupType, setPickupType] = useState<'immediate' | 'scheduled'>('immediate');
+  const [selectedOutlet, setSelectedOutlet] = useState<OutletLocation | null>(null);
+  const [pickupDate, setPickupDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bnpl'>('cash');
+
+  useEffect(() => {
+    loadCart();
+    // Set default date to 2 days from now
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 2);
+    setPickupDate(defaultDate.toISOString().split('T')[0]);
+  }, []);
+
+  const loadCart = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const items: CartItem[] = cart
+        .map((item: any) => {
+          const product = products.find((p) => p.id === item.productId);
+          if (!product) return null;
+          return {
+            product,
+            quantity: item.quantity,
+          };
+        })
+        .filter(Boolean);
+      setCartItems(items);
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      setCartItems([]);
+    }
+  };
+
+  const calculateTotal = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const subtotal = cartItems.reduce((sum, item) => {
+        const cartItem = cart.find((ci: any) => ci.productId === item.product.id);
+        const price = cartItem?.paymentMethod === 'bnpl' 
+          ? item.product.bnplPrice 
+          : item.product.cashPrice;
+        return sum + price * item.quantity;
+      }, 0);
+      const tax = subtotal * 0.09;
+      return subtotal + tax;
+    } catch (error) {
+      console.error('Error calculating total:', error);
+      return 0;
+    }
+  };
+
+  const availableOutlets = outletLocations.filter((outlet) => {
+    if (pickupType === 'immediate') {
+      return outlet.type === 'hub';
+    }
+    return true;
+  });
+
+  const handlePlaceOrder = () => {
+    // Save order to localStorage
+    const orderData = {
+      id: `ORD-${Date.now()}`,
+      items: cartItems,
+      total,
+      paymentMethod,
+      pickupType,
+      pickupLocation: selectedOutlet?.name || '',
+      pickupDate,
+      createdAt: new Date().toISOString(),
+    };
+    
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    localStorage.removeItem('cart');
+    
+    navigate('/customer/order-confirmation');
+  };
+
+  const total = calculateTotal();
+
+  return (
+    <div className="bg-white min-h-screen">
+      <div className="max-w-[1200px] mx-auto p-8">
+        <h1 className="font-bold text-3xl text-[#101828] mb-8">Checkout</h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Checkout Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Pickup Type Selection */}
+            <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+              <h2 className="font-bold text-xl text-[#101828] mb-4 flex items-center gap-2">
+                <MapPin className="w-6 h-6 text-[#ff6900]" />
+                Select Pickup Method
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Immediate Pickup */}
+                <div
+                  onClick={() => {
+                    setPickupType('immediate');
+                    setSelectedOutlet(null);
+                  }}
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    pickupType === 'immediate'
+                      ? 'border-[#ff6900] bg-[#fff7ed]'
+                      : 'border-[#e5e7eb] hover:border-[#ff6900]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[#101828]">Immediate Pickup</span>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      pickupType === 'immediate' ? 'border-[#ff6900]' : 'border-gray-300'
+                    }`}>
+                      {pickupType === 'immediate' && <div className="w-3 h-3 rounded-full bg-[#ff6900]" />}
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#6a7282] mb-2">
+                    Collect today at Hub Outlets
+                  </p>
+                  <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded inline-block">
+                    <CheckCircle className="w-3 h-3 inline mr-1" />
+                    Ready in 1 hour
+                  </div>
+                </div>
+
+                {/* Scheduled Pickup */}
+                <div
+                  onClick={() => {
+                    setPickupType('scheduled');
+                    setSelectedOutlet(null);
+                  }}
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    pickupType === 'scheduled'
+                      ? 'border-[#155dfc] bg-blue-50'
+                      : 'border-[#e5e7eb] hover:border-[#155dfc]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[#101828]">Scheduled Pickup</span>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      pickupType === 'scheduled' ? 'border-[#155dfc]' : 'border-gray-300'
+                    }`}>
+                      {pickupType === 'scheduled' && <div className="w-3 h-3 rounded-full bg-[#155dfc]" />}
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#6a7282] mb-2">
+                    Any of 69+ heartland outlets
+                  </p>
+                  <div className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded inline-block flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    24-48 hours
+                  </div>
+                </div>
+              </div>
+
+              {/* Pickup Date (for scheduled) */}
+              {pickupType === 'scheduled' && (
+                <div className="mb-6">
+                  <label className="block font-medium text-[#101828] mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Preferred Pickup Date
+                  </label>
+                  <input
+                    type="date"
+                    value={pickupDate}
+                    onChange={(e) => setPickupDate(e.target.value)}
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              {/* Outlet Selection */}
+              <div>
+                <h3 className="font-bold text-[#101828] mb-3">
+                  {pickupType === 'immediate' ? 'Hub Outlets (Immediate Pickup)' : 'All Outlets (Choose Your Nearest)'}
+                </h3>
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {availableOutlets.map((outlet) => (
+                    <div
+                      key={outlet.id}
+                      onClick={() => setSelectedOutlet(outlet)}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedOutlet?.id === outlet.id
+                          ? 'border-[#ff6900] bg-[#fff7ed]'
+                          : 'border-[#e5e7eb] hover:border-[#ff6900]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-bold text-[#101828]">{outlet.name}</p>
+                            {outlet.type === 'hub' && (
+                              <span className="bg-[#ff6900] text-white text-xs px-2 py-0.5 rounded">
+                                HUB
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-[#6a7282]">{outlet.address}</p>
+                          {outlet.leadTime && (
+                            <p className="text-xs text-[#155dfc] mt-1">Lead time: {outlet.leadTime}</p>
+                          )}
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          selectedOutlet?.id === outlet.id ? 'border-[#ff6900]' : 'border-gray-300'
+                        }`}>
+                          {selectedOutlet?.id === outlet.id && <div className="w-3 h-3 rounded-full bg-[#ff6900]" />}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-50 border border-[#e5e7eb] rounded-lg p-6 sticky top-8">
+              <h2 className="font-bold text-xl text-[#101828] mb-4">Order Summary</h2>
+
+              {/* Items */}
+              <div className="space-y-3 mb-4 max-h-[200px] overflow-y-auto">
+                {cartItems.map((item) => (
+                  <div key={item.product.id} className="flex justify-between text-sm">
+                    <span className="text-[#6a7282]">
+                      {item.product.name} x{item.quantity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-[#e5e7eb] pt-4 mb-4">
+                <div className="flex justify-between mb-2">
+                  <span className="font-bold text-lg text-[#101828]">Total</span>
+                  <span className="font-bold text-2xl text-[#ff6900]">${total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Pickup Summary */}
+              {selectedOutlet && (
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-4 mb-4">
+                  <p className="font-bold text-sm text-[#101828] mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#155dfc]" />
+                    Pickup Details:
+                  </p>
+                  <p className="text-xs text-[#6a7282] mb-1">{selectedOutlet.name}</p>
+                  <p className="text-xs text-[#6a7282] mb-2">{selectedOutlet.address}</p>
+                  {pickupType === 'scheduled' && (
+                    <p className="text-xs text-[#155dfc] flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      Ready by: {new Date(pickupDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  {pickupType === 'immediate' && (
+                    <p className="text-xs text-green-700 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Ready for pickup in 1 hour
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={handlePlaceOrder}
+                className="w-full bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-orange-500/20 transition-all"
+              >
+                Place Order - ${total.toFixed(2)}
+              </button>
+
+              <p className="text-xs text-center text-[#6a7282] mt-4">
+                By placing this order, you agree to our terms and conditions
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

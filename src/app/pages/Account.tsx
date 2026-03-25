@@ -1,0 +1,243 @@
+import { useState } from 'react';
+import { User, CreditCard, MapPin, Package, Shield, Star, Award, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router';
+
+type TabType = 'profile' | 'subscription' | 'credit';
+
+export default function Account() {
+  const [activeTab, setActiveTab] = useState<TabType>('profile');
+  const navigate = useNavigate();
+
+  const customer = {
+    shopName: 'Mama Shop #493',
+    uen: '201012345C',
+    contactPerson: 'John Tan',
+    email: 'john.tan@mamashop493.com',
+    phone: '+65 9123 4567',
+    address: '123 Hougang Ave 3, #01-234, Singapore 530123',
+    creditLimit: 5000,
+    usedCredit: 2550,
+    availableCredit: 2450,
+    membershipTier: 'prime',
+    memberSince: 'Jan 2024',
+    rewardsPoints: 12400,
+    nextBillingDate: 'April 20, 2026',
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 min-h-screen">
+      <div className="max-w-[1400px] mx-auto p-8">
+        <h1 className="font-bold text-3xl text-[#101828] mb-8">Account Management</h1>
+
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr]">
+            {/* Sidebar Navigation */}
+            <div className="bg-gradient-to-br from-gray-50 to-white border-r-2 border-gray-100 p-6">
+              <div className="space-y-2">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all ${
+                    activeTab === 'profile'
+                      ? 'bg-gradient-to-r from-orange-100 to-orange-50 text-[#d08700] border-2 border-[#ff6900]'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="w-5 h-5" />
+                    <span>Profile & Business</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('subscription')}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all ${
+                    activeTab === 'subscription'
+                      ? 'bg-gradient-to-r from-orange-100 to-orange-50 text-[#d08700] border-2 border-[#ff6900]'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Star className="w-5 h-5" />
+                    <span>Subscription (Prime)</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('credit')}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all ${
+                    activeTab === 'credit'
+                      ? 'bg-gradient-to-r from-orange-100 to-orange-50 text-[#d08700] border-2 border-[#ff6900]'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-5 h-5" />
+                    <span>B2B Credit & BNPL</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="p-8">
+              {/* Profile & Business Tab */}
+              {activeTab === 'profile' && (
+                <div className="space-y-6">
+                  <div className="border-b-2 border-gray-100 pb-4">
+                    <h2 className="text-2xl font-bold text-[#0a0a0a]">Business Profile</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Shop Name</label>
+                      <input
+                        type="text"
+                        defaultValue={customer.shopName}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ff6900] focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">UEN</label>
+                      <input
+                        type="text"
+                        defaultValue={customer.uen}
+                        disabled
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-500"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Business Address</label>
+                      <textarea
+                        defaultValue={customer.address}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ff6900] focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <button className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl transition-all">
+                    Save Changes
+                  </button>
+                </div>
+              )}
+
+              {/* Subscription Tab */}
+              {activeTab === 'subscription' && (
+                <div className="space-y-6">
+                  <div className="border-b-2 border-gray-100 pb-4">
+                    <h2 className="text-2xl font-bold text-[#0a0a0a]">Valu$ Trade Prime Subscription</h2>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-[#ff6900] rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-[#733e0a] mb-1">Active Prime Member</h3>
+                        <p className="text-sm text-[#a65f00]">Next billing date: {customer.nextBillingDate}</p>
+                      </div>
+                      <Star className="w-10 h-10 text-[#f0b100]" fill="#f0b100" />
+                    </div>
+
+                    <button className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
+                      Cancel Subscription
+                    </button>
+                  </div>
+
+                  <div className="bg-white border-2 border-gray-100 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Subscription Benefits</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        'Exclusive wholesale pricing',
+                        'Priority order processing',
+                        'Extended BNPL credit terms',
+                        'Free delivery on orders above $500',
+                        'Access to member-only deals',
+                        'Dedicated account manager',
+                      ].map((benefit, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          <span className="text-gray-700">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-blue-900 mb-2">Upgrade Your Plan</h3>
+                    <p className="text-blue-700 mb-4">
+                      Get even more benefits with our Enterprise tier. Contact sales for custom pricing.
+                    </p>
+                    <button className="bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
+                      Contact Sales
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* B2B Credit & BNPL Tab */}
+              {activeTab === 'credit' && (
+                <div className="space-y-6">
+                  <div className="border-b-2 border-gray-100 pb-4">
+                    <h2 className="text-2xl font-bold text-[#0a0a0a]">B2B Credit & BNPL</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
+                      <p className="text-sm font-semibold text-[#1c398e] mb-2">Total Credit Limit</p>
+                      <p className="text-4xl font-bold text-[#1c398e]">${customer.creditLimit.toFixed(2)}</p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-2xl p-6">
+                      <p className="text-sm font-semibold text-[#0d542b] mb-2">Available Credit</p>
+                      <p className="text-4xl font-bold text-[#0d542b]">${customer.availableCredit.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-gray-100 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">CLP Rewards Points</h3>
+                        <p className="text-3xl font-bold text-[#d08700] mt-2">{customer.rewardsPoints.toLocaleString()} Points</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Equivalent to ${(customer.rewardsPoints / 100).toFixed(2)} credit
+                        </p>
+                      </div>
+                      <button className="bg-gradient-to-r from-[#f0b100] to-[#d09900] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl transition-all">
+                        Redeem
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-200 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">BNPL Benefits</h3>
+                    <div className="space-y-2">
+                      {[
+                        'Flexible payment terms up to 90 days',
+                        'No upfront costs for qualified orders',
+                        'Automated payment tracking',
+                        'Build business credit score',
+                      ].map((benefit, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <Award className="w-5 h-5 text-[#ff6900] flex-shrink-0" />
+                          <span className="text-gray-700">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/customer/payments')}
+                    className="w-full bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all"
+                  >
+                    View Payment Schedule
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
