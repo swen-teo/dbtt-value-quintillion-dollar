@@ -8,7 +8,7 @@ export default function Account() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const navigate = useNavigate();
 
-  const customer = {
+  const [customer, setCustomer] = useState({
     shopName: 'Mama Shop #493',
     uen: '201012345C',
     contactPerson: 'John Tan',
@@ -18,11 +18,11 @@ export default function Account() {
     creditLimit: 5000,
     usedCredit: 2550,
     availableCredit: 2450,
-    membershipTier: 'prime',
+    membershipTier: 'normal',
     memberSince: 'Jan 2024',
     rewardsPoints: 12400,
     nextBillingDate: 'April 20, 2026',
-  };
+  });
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 min-h-screen">
@@ -127,51 +127,110 @@ export default function Account() {
               {activeTab === 'subscription' && (
                 <div className="space-y-6">
                   <div className="border-b-2 border-gray-100 pb-4">
-                    <h2 className="text-2xl font-bold text-[#0a0a0a]">Valu$ Trade Prime Subscription</h2>
+                    <h2 className="text-2xl font-bold text-[#0a0a0a]">Subscription Plan</h2>
                   </div>
 
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-[#ff6900] rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-[#733e0a] mb-1">Active Prime Member</h3>
-                        <p className="text-sm text-[#a65f00]">Next billing date: {customer.nextBillingDate}</p>
-                      </div>
-                      <Star className="w-10 h-10 text-[#f0b100]" fill="#f0b100" />
-                    </div>
-
-                    <button className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
-                      Cancel Subscription
-                    </button>
-                  </div>
-
-                  <div className="bg-white border-2 border-gray-100 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Subscription Benefits</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        'Exclusive wholesale pricing',
-                        'Priority order processing',
-                        'Extended BNPL credit terms',
-                        'Free delivery on orders above $500',
-                        'Access to member-only deals',
-                        'Dedicated account manager',
-                      ].map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          <span className="text-gray-700">{benefit}</span>
+                  {customer.membershipTier === 'normal' ? (
+                    <>
+                      <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-1">Normal Business Account</h3>
+                            <p className="text-sm text-gray-500">Free tier for traditional retailers</p>
+                          </div>
+                          <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-lg font-bold text-sm">
+                            Current Plan
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
 
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-blue-900 mb-2">Upgrade Your Plan</h3>
-                    <p className="text-blue-700 mb-4">
-                      Get even more benefits with our Enterprise tier. Contact sales for custom pricing.
-                    </p>
-                    <button className="bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
-                      Contact Sales
-                    </button>
-                  </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-[#ff6900] rounded-2xl p-8 relative overflow-hidden shadow-lg">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff6900]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Star className="w-8 h-8 text-[#ff6900]" fill="#ff6900" />
+                            <h3 className="text-2xl font-bold text-gray-900">Upgrade to Trade Prime</h3>
+                          </div>
+                          <p className="text-gray-700 mb-6">Unlock exclusive pricing, early BNPL access, and priority delivery.</p>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            {[
+                              'Exclusive wholesale pricing',
+                              'Priority order processing',
+                              'Extended BNPL credit terms',
+                              'Free delivery on orders above $500',
+                            ].map((benefit, index) => (
+                              <div key={index} className="flex items-center gap-3">
+                                <CheckCircle className="w-5 h-5 text-[#ff6900] flex-shrink-0" />
+                                <span className="text-gray-800 font-medium">{benefit}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between bg-white/60 p-4 rounded-xl">
+                            <div>
+                              <span className="text-3xl font-bold text-[#ff6900]">$29</span>
+                              <span className="text-gray-600"> / month</span>
+                            </div>
+                            <button 
+                              onClick={() => setCustomer({ ...customer, membershipTier: 'prime' })}
+                              className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all"
+                            >
+                              Upgrade Now
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-[#ff6900] rounded-2xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-[#733e0a] mb-1">Active Prime Member</h3>
+                            <p className="text-sm text-[#a65f00]">Next billing date: {customer.nextBillingDate}</p>
+                          </div>
+                          <Star className="w-10 h-10 text-[#f0b100]" fill="#f0b100" />
+                        </div>
+
+                        <button 
+                          onClick={() => setCustomer({ ...customer, membershipTier: 'normal' })}
+                          className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all"
+                        >
+                          Cancel Subscription
+                        </button>
+                      </div>
+
+                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Subscription Benefits</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[
+                            'Exclusive wholesale pricing',
+                            'Priority order processing',
+                            'Extended BNPL credit terms',
+                            'Free delivery on orders above $500',
+                            'Access to member-only deals',
+                            'Dedicated account manager',
+                          ].map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                              <span className="text-gray-700">{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
+                        <h3 className="text-lg font-bold text-blue-900 mb-2">Upgrade Your Plan</h3>
+                        <p className="text-blue-700 mb-4">
+                          Get even more benefits with our Enterprise tier. Contact sales for custom pricing.
+                        </p>
+                        <button className="bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
+                          Contact Sales
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
