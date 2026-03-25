@@ -110,7 +110,7 @@ export default function LandingHome() {
                   Buy now, pay later with our flexible BNPL system.
                 </p>
                 <button 
-                  onClick={() => navigate('/customer/shop')}
+                  onClick={() => navigate('/onboarding')}
                   className="group bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-10 py-4 rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl hover:shadow-orange-500/30 transition-all inline-flex items-center gap-2"
                 >
                   Discover More
@@ -142,7 +142,7 @@ export default function LandingHome() {
                         <span className="text-2xl font-bold text-white">OFF</span>
                       </div>
                       <button 
-                        onClick={() => navigate('/customer/deals')}
+                        onClick={() => navigate('/login')}
                         className="bg-white text-[#ff6900] px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all inline-flex items-center gap-2 group-hover:gap-3"
                       >
                         Shop Now

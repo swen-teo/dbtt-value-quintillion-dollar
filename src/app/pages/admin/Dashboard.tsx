@@ -5,6 +5,21 @@ import { useNavigate } from 'react-router';
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  const handleExportReport = () => {
+    const rows = [
+      ['Product', 'Current Stock', 'Forecast Demand (7 days)', 'Action'],
+      ...priorityRestocks.map(item => [item.name, item.stock, item.forecast, item.status])
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'valu-report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const chartData = [
     { name: 'Rice 25kg Premium', value: 4892, fill: '#ff6900' },
     { name: 'Cooking Oil 5L', value: 3621, fill: '#ff8534' },
@@ -101,27 +116,27 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl p-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <h3 className="font-bold text-lg text-[#1f2937] mb-5">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={() => navigate('/admin/catalog')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <Package className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">New Product</p>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={() => navigate('/admin/catalog/pricing')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <Clipboard className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">Update Pricing</p>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={() => navigate('/admin/orders')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <Truck className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">Process Orders</p>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={() => navigate('/admin/catalog/forecasting')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <TrendingUp className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">View Analytics</p>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={handleExportReport} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <FileText className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">Export Report</p>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
+            <button onClick={() => navigate('/admin/orders')} className="flex flex-col items-center justify-center p-4 border border-[#e5e7eb] rounded-lg hover:border-[#ff6900] hover:bg-[#fff7ed] transition-colors">
               <History className="w-8 h-8 text-[#ff6900] mb-2" />
               <p className="font-medium text-xs text-center text-[#1f2937]">Order History</p>
             </button>

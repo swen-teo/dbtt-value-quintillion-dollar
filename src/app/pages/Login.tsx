@@ -82,6 +82,16 @@ export default function Login() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
+
+          {/* Admin Link */}
+          <div className="mt-6 pt-6 border-t-2 border-gray-200 text-center">
+            <button
+              onClick={() => navigate('/admin/login')}
+              className="text-lg font-bold text-gray-700 hover:text-[#ff6900] transition-colors underline decoration-2 underline-offset-4"
+            >
+              Admin Portal →
+            </button>
+          </div>
         </div>
 
         {/* New Member Link */}
@@ -105,15 +115,6 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Admin Link */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate('/admin/login')}
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            Admin Portal →
-          </button>
-        </div>
       </div>
     </div>
   );
