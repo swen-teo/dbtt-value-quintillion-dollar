@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "start": "python forecasting_service/init_db.py && concurrently -n FLASK, VITE -c yellow,cyan \"python forecasting_service/app.py\"\"npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
