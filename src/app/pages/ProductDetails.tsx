@@ -9,7 +9,6 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const product = products.find((p) => p.id === id);
   const [quantity, setQuantity] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bnpl'>('cash');
 
   if (!product) {
     return (
@@ -30,9 +29,8 @@ export default function ProductDetails() {
       
       if (existingItem) {
         existingItem.quantity += quantity;
-        existingItem.paymentMethod = paymentMethod;
       } else {
-        cart.push({ productId: product.id, quantity, paymentMethod });
+        cart.push({ productId: product.id, quantity });
       }
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -43,9 +41,7 @@ export default function ProductDetails() {
     }
   };
 
-  const totalPrice = (paymentMethod === 'cash' 
-    ? (product?.cashPrice || 0) 
-    : (product?.bnplPrice || 0)) * quantity;
+  const totalPrice = (product?.cashPrice || 0) * quantity;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -61,9 +57,9 @@ export default function ProductDetails() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Product Image */}
-          <div className="bg-white rounded-3xl border-2 border-gray-100 p-8 shadow-lg">
-            <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center">
-              <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8" />
+          <div className="bg-white rounded-3xl border-2 border-gray-100 p-6 shadow-lg h-fit">
+            <div className="h-[400px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center overflow-hidden">
+              <img src={product.image} alt={product.name} className="w-full h-full object-contain p-6" />
             </div>
           </div>
 
@@ -91,56 +87,7 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setPaymentMethod('cash')}
-                className={`flex-1 py-4 rounded-2xl border-2 transition-all font-bold ${
-                  paymentMethod === 'cash'
-                    ? 'border-[#ff6900] bg-orange-50 text-[#ff6900]'
-                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
-                }`}
-              >
-                Cash Price
-              </button>
-              <button
-                onClick={() => setPaymentMethod('bnpl')}
-                className={`flex-1 py-4 rounded-2xl border-2 transition-all font-bold ${
-                  paymentMethod === 'bnpl'
-                    ? 'border-blue-500 bg-blue-50 text-blue-500'
-                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
-                }`}
-              >
-                BNPL Price
-              </button>
-            </div>
 
-            {/* BNPL Details */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Buy Now Pay Later</h3>
-                  <p className="text-sm text-blue-100">Split into 4 interest-free payments</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3">
-                {[1, 2, 3, 4].map((installment) => (
-                  <div key={installment} className="bg-white/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
-                    <p className="text-xs text-blue-100 mb-1">Week {installment}</p>
-                    <p className="font-bold text-lg">${((product?.cashPrice || 0) / 4).toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-xs text-blue-100 mt-4 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                No interest, no hidden fees
-              </p>
-            </div>
 
             {/* Quantity Selector */}
             <div className="mb-6">
@@ -169,16 +116,11 @@ export default function ProductDetails() {
             </div>
 
             {/* Total Price */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-100 shadow-inner mb-6">
               <div className="flex justify-between items-center">
-                <span className="font-bold text-lg text-[#101828]">Total ({paymentMethod.toUpperCase()}):</span>
-                <span className="font-bold text-2xl text-[#ff6900]">${(totalPrice || 0).toFixed(2)}</span>
+                <span className="font-bold text-xl text-gray-900">Order Total:</span>
+                <span className="font-black text-3xl text-[#ff6900]">${(totalPrice || 0).toFixed(2)}</span>
               </div>
-              {paymentMethod === 'bnpl' && (
-                <p className="text-sm text-[#6a7282] mt-1">
-                  or ${calculateBNPL(totalPrice)} per week for 4 weeks
-                </p>
-              )}
             </div>
 
             {/* Product Details */}

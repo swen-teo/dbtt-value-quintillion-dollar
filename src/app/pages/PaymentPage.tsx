@@ -23,6 +23,12 @@ export default function PaymentPage() {
     setProcessing(true);
     setTimeout(() => {
       setProcessing(false);
+      // Simulate directly hitting Account's useCredit since GrabMock is gone
+      const currentUsed = parseInt(sessionStorage.getItem('usedCredit') || '0', 10);
+      const newUsed = Math.max(0, currentUsed - payment.amount);
+      sessionStorage.setItem('usedCredit', newUsed.toString());
+      window.dispatchEvent(new Event('accountTypeChanged'));
+
       alert('Payment processed successfully!');
       navigate('/customer/payments');
     }, 2000);

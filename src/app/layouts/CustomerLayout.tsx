@@ -151,7 +151,12 @@ export default function CustomerLayout() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 cursor-pointer hover:opacity-70" onClick={() => navigate('/')}>
+          <div className="flex items-center gap-2 cursor-pointer hover:opacity-70" onClick={() => {
+            sessionStorage.clear();
+            // Also notify any listeners that account type has changed to reset UI
+            window.dispatchEvent(new Event('accountTypeChanged'));
+            navigate('/');
+          }}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 19.9971 19.9971">
               <g>
                 <path d={svgPaths.p2f1ee400} stroke="#99A1AF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66642" />
