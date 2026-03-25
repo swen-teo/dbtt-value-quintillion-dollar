@@ -7,6 +7,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     shopName: '',
+    uen: '',
     contactPerson: '',
     email: '',
     phone: '',
@@ -223,17 +224,32 @@ export default function Onboarding() {
 
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">
-                    Shop Name <span className="text-[#ff6900]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.shopName}
-                    onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all"
-                    placeholder="e.g., Mama Shop #123"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">
+                      Shop Name <span className="text-[#ff6900]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.shopName}
+                      onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all"
+                      placeholder="e.g., Mama Shop #123"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">
+                      Business UEN <span className="text-[#ff6900]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.uen}
+                      onChange={(e) => setFormData({ ...formData, uen: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all"
+                      placeholder="e.g., 201012345C"
+                    />
+                  </div>
                 </div>
 
                 <div>
