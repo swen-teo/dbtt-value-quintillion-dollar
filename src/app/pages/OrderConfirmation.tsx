@@ -1,27 +1,55 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { CheckCircle, Package, MapPin, Calendar, CreditCard, ArrowRight, Download } from 'lucide-react';
 
 export default function OrderConfirmation() {
   const navigate = useNavigate();
+  const [order, setOrder] = useState<any>(null);
 
-  // Mock order data
-  const order = {
-    id: 'ORD-1003',
-    date: new Date().toISOString(),
-    total: 247.50,
-    paymentMethod: 'bnpl',
-    installments: 4,
-    installmentAmount: 61.88,
-    pickupType: 'scheduled',
-    pickupLocation: 'Valu$ Tampines Outlet',
-    pickupAddress: '456 Tampines Ave 9, Singapore 520456',
-    pickupDate: '2026-03-25',
-    items: [
-      { name: 'Premium Cola (24x330ml)', quantity: 2, price: 45.00 },
-      { name: 'Potato Chips Box (60x30g)', quantity: 3, price: 76.50 },
-      { name: 'Instant Noodles (40 packs)', quantity: 4, price: 88.00 },
-    ],
-  };
+  useEffect(() => {
+    const savedOrderStr = localStorage.getItem('lastOrder');
+    if (savedOrderStr) {
+      const savedOrder = JSON.parse(savedOrderStr);
+      setOrder({
+        id: savedOrder.id,
+        date: savedOrder.createdAt,
+        total: savedOrder.total,
+        paymentMethod: savedOrder.paymentMethod,
+        installments: 4,
+        installmentAmount: savedOrder.total / 4,
+        pickupType: savedOrder.pickupType,
+        pickupLocation: savedOrder.pickupLocation,
+        pickupAddress: savedOrder.pickupLocation, // Location name acts as address backup
+        pickupDate: savedOrder.pickupDate,
+        items: savedOrder.items.map((i: any) => ({
+          name: i.product.name,
+          quantity: i.quantity,
+          price: (savedOrder.paymentMethod === 'bnpl' ? i.product.bnplPrice : i.product.cashPrice) * i.quantity
+        }))
+      });
+    } else {
+      // Default fallback if no order
+      setOrder({
+        id: 'ORD-1003',
+        date: new Date().toISOString(),
+        total: 247.50,
+        paymentMethod: 'bnpl',
+        installments: 4,
+        installmentAmount: 61.88,
+        pickupType: 'scheduled',
+        pickupLocation: 'Valu$ Tampines Outlet',
+        pickupAddress: '456 Tampines Ave 9, Singapore 520456',
+        pickupDate: '2026-03-25',
+        items: [
+          { name: 'Premium Cola (24x330ml)', quantity: 2, price: 45.00 },
+          { name: 'Potato Chips Box (60x30g)', quantity: 3, price: 76.50 },
+          { name: 'Instant Noodles (40 packs)', quantity: 4, price: 88.00 },
+        ],
+      });
+    }
+  }, []);
+
+  if (!order) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
