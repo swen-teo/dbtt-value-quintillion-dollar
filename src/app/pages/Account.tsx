@@ -8,6 +8,9 @@ export default function Account() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const navigate = useNavigate();
 
+  const [pendingCreditLimit, setPendingCreditLimit] = useState(5000);
+  const initialCreditLimit = parseInt(sessionStorage.getItem('creditLimit') || '0', 10);
+
   const [customer, setCustomer] = useState({
     shopName: 'Mama Shop #493',
     uen: '201012345C',
@@ -15,10 +18,10 @@ export default function Account() {
     email: 'john.tan@mamashop493.com',
     phone: '+65 9123 4567',
     address: '123 Hougang Ave 3, #01-234, Singapore 530123',
-    creditLimit: 5000,
-    usedCredit: 2550,
-    availableCredit: 2450,
-    membershipTier: 'normal',
+    creditLimit: initialCreditLimit,
+    usedCredit: 0,
+    availableCredit: initialCreditLimit,
+    membershipTier: sessionStorage.getItem('accountType') || 'normal',
     memberSince: 'Jan 2024',
     rewardsPoints: 12400,
     nextBillingDate: 'April 20, 2026',
@@ -30,7 +33,7 @@ export default function Account() {
         <h1 className="font-bold text-3xl text-[#101828] mb-8">Account Management</h1>
 
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr]">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
             {/* Sidebar Navigation */}
             <div className="bg-gradient-to-br from-gray-50 to-white border-r-2 border-gray-100 p-6">
               <div className="space-y-2">
@@ -71,8 +74,8 @@ export default function Account() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5" />
-                    <span>B2B Credit & BNPL</span>
+                    <CreditCard className="w-5 h-5 flex-shrink-0" />
+                    <span className="whitespace-nowrap">B2B Credit & BNPL</span>
                   </div>
                 </button>
               </div>
@@ -173,7 +176,11 @@ export default function Account() {
                               <span className="text-gray-600"> / month</span>
                             </div>
                             <button 
-                              onClick={() => setCustomer({ ...customer, membershipTier: 'prime' })}
+                              onClick={() => {
+                                setCustomer({ ...customer, membershipTier: 'prime' });
+                                sessionStorage.setItem('accountType', 'prime');
+                                window.dispatchEvent(new Event('accountTypeChanged'));
+                              }}
                               className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all"
                             >
                               Upgrade Now
@@ -194,7 +201,11 @@ export default function Account() {
                         </div>
 
                         <button 
-                          onClick={() => setCustomer({ ...customer, membershipTier: 'normal' })}
+                          onClick={() => {
+                            setCustomer({ ...customer, membershipTier: 'normal' });
+                            sessionStorage.setItem('accountType', 'normal');
+                            window.dispatchEvent(new Event('accountTypeChanged'));
+                          }}
                           className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all"
                         >
                           Cancel Subscription
@@ -220,15 +231,6 @@ export default function Account() {
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
-                        <h3 className="text-lg font-bold text-blue-900 mb-2">Upgrade Your Plan</h3>
-                        <p className="text-blue-700 mb-4">
-                          Get even more benefits with our Enterprise tier. Contact sales for custom pricing.
-                        </p>
-                        <button className="bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all">
-                          Contact Sales
-                        </button>
-                      </div>
                     </>
                   )}
                 </div>
@@ -241,56 +243,123 @@ export default function Account() {
                     <h2 className="text-2xl font-bold text-[#0a0a0a]">B2B Credit & BNPL</h2>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6">
-                      <p className="text-sm font-semibold text-[#1c398e] mb-2">Total Credit Limit</p>
-                      <p className="text-4xl font-bold text-[#1c398e]">${customer.creditLimit.toFixed(2)}</p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-2xl p-6">
-                      <p className="text-sm font-semibold text-[#0d542b] mb-2">Available Credit</p>
-                      <p className="text-4xl font-bold text-[#0d542b]">${customer.availableCredit.toFixed(2)}</p>
-                    </div>
-                  </div>
-
-                  <div className="border-2 border-gray-100 rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">CLP Rewards Points</h3>
-                        <p className="text-3xl font-bold text-[#d08700] mt-2">{customer.rewardsPoints.toLocaleString()} Points</p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Equivalent to ${(customer.rewardsPoints / 100).toFixed(2)} credit
-                        </p>
-                      </div>
-                      <button className="bg-gradient-to-r from-[#f0b100] to-[#d09900] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl transition-all">
-                        Redeem
+                  {customer.membershipTier === 'normal' ? (
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-8 text-center mt-8">
+                      <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Subscribe to Trade Prime</h3>
+                      <p className="text-gray-600 mb-6 font-medium">Please subscribe to the Trade Prime plan to view and manage your B2B Credit Limit.</p>
+                      <button 
+                        onClick={() => setActiveTab('subscription')}
+                        className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl transition-all inline-flex items-center gap-2"
+                      >
+                        <Star className="w-5 h-5 fill-current" />
+                        Upgrade to Prime
                       </button>
                     </div>
-                  </div>
+                  ) : customer.creditLimit === 0 ? (
+                    <div className="space-y-6">
+                      <div className="text-center mb-8">
+                        <p className="text-gray-600 font-medium">Please select a BNPL credit limit for your new Prime account</p>
+                      </div>
 
-                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-200 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">BNPL Benefits</h3>
-                    <div className="space-y-2">
-                      {[
-                        'Flexible payment terms up to 90 days',
-                        'No upfront costs for qualified orders',
-                        'Automated payment tracking',
-                        'Build business credit score',
-                      ].map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <Award className="w-5 h-5 text-[#ff6900] flex-shrink-0" />
-                          <span className="text-gray-700">{benefit}</span>
-                        </div>
-                      ))}
+                      <div className="space-y-4 mb-8">
+                        {[3000, 5000, 10000].map((limit) => (
+                          <div
+                            key={limit}
+                            onClick={() => setPendingCreditLimit(limit)}
+                            className={`bg-white rounded-2xl border-2 p-6 cursor-pointer transition-all ${
+                              pendingCreditLimit === limit
+                                ? 'border-[#ff6900] shadow-xl'
+                                : 'border-gray-200 hover:border-[#ff6900] hover:shadow-lg'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                  pendingCreditLimit === limit
+                                    ? 'border-[#ff6900] bg-[#ff6900]'
+                                    : 'border-gray-300'
+                                }`}>
+                                  {pendingCreditLimit === limit && (
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-2xl text-gray-900">${limit.toLocaleString()}</p>
+                                  <p className="text-sm text-gray-600">Monthly Credit Limit</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-600">Weekly Payment</p>
+                                <p className="font-bold text-lg text-[#155dfc]">
+                                  ${(limit / 4).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setCustomer({ ...customer, creditLimit: pendingCreditLimit, availableCredit: pendingCreditLimit });
+                          sessionStorage.setItem('creditLimit', pendingCreditLimit.toString());
+                        }}
+                        className="w-full bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-4 rounded-xl font-bold hover:shadow-xl hover:-translate-y-1 transition-all text-lg"
+                      >
+                        Confirm Credit Limit
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6 flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-[#1c398e] mb-2">Total Credit Limit</p>
+                            <p className="text-4xl font-bold text-[#1c398e]">${customer.creditLimit.toFixed(2)}</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setPendingCreditLimit(customer.creditLimit);
+                              setCustomer({...customer, creditLimit: 0});
+                            }}
+                            className="bg-white text-[#155dfc] text-sm px-4 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all border border-blue-200"
+                          >
+                            Change limit
+                          </button>
+                        </div>
 
-                  <button
-                    onClick={() => navigate('/customer/payments')}
-                    className="w-full bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all"
-                  >
-                    View Payment Schedule
-                  </button>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-2xl p-6">
+                          <p className="text-sm font-semibold text-[#0d542b] mb-2">Available Credit</p>
+                          <p className="text-4xl font-bold text-[#0d542b]">${customer.availableCredit.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-200 rounded-2xl p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-3">BNPL Benefits</h3>
+                        <div className="space-y-2">
+                          {[
+                            'Flexible payment terms up to 90 days',
+                            'No upfront costs for qualified orders',
+                            'Automated payment tracking',
+                            'Build business credit score',
+                          ].map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                              <Award className="w-5 h-5 text-[#ff6900] flex-shrink-0" />
+                              <span className="text-gray-700">{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => navigate('/customer/payments')}
+                        className="w-full bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all"
+                      >
+                        View Payment Schedule
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
