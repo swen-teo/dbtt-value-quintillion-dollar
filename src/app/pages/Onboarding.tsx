@@ -12,6 +12,7 @@ export default function Onboarding() {
     phone: '',
     address: '',
     creditLimit: 5000,
+    accountType: 'prime', // 'prime' or 'normal'
   });
 
   const handleNext = () => {
@@ -381,20 +382,37 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                onClick={handleBack}
-                className="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-bold hover:border-gray-400 transition-all"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleNext}
-                className="flex-1 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-6 py-3 rounded-lg font-bold hover:shadow-xl transition-all flex items-center justify-center gap-2"
-              >
-                Complete Setup
-                <ArrowRight className="w-5 h-5" />
-              </button>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-4">
+                <button
+                  onClick={handleBack}
+                  className="w-1/3 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-bold hover:border-gray-400 transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => {
+                    setFormData({ ...formData, accountType: 'prime' });
+                    handleNext();
+                  }}
+                  className="flex-1 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                >
+                  Complete Trade Prime Setup
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setFormData({ ...formData, accountType: 'normal' });
+                    handleNext();
+                  }}
+                  className="w-full border-2 border-gray-200 text-gray-600 bg-white px-6 py-4 rounded-xl font-bold hover:border-[#155dfc] hover:text-[#155dfc] hover:bg-blue-50 transition-all shadow-sm"
+                >
+                  Skip BNPL for now and continue with Normal Business Account
+                </button>
+              </div>
             </div>
           </div>
         )}
