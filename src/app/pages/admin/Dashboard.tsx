@@ -11,6 +11,29 @@ export default function Dashboard() {
     const timer = setTimeout(() => setIsSyncing(false), 2200);
     return () => clearTimeout(timer);
   }, []);
+  const handleExportReport = () => {
+    const rows = [
+      ['Product', 'Current Stock', 'Forecast Demand (7 days)', 'Action'],
+      ...priorityRestocks.map(item => [item.name, item.stock, item.forecast, item.status])
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'valu-report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const chartData = [
+    { name: 'Rice 25kg Premium', value: 4892, fill: '#ff6900' },
+    { name: 'Cooking Oil 5L', value: 3621, fill: '#ff8534' },
+    { name: 'Canned sardines', value: 2482, fill: '#ffb366' },
+    { name: 'Sugar 1kg Bundle', value: 1684, fill: '#ffc999' },
+    { name: 'Instant Noodles ...', value: 1423, fill: '#ffd9b3' },
+    { name: 'Soy Sauce 1L', value: 892, fill: '#ffe6cc' },
+  ];
 
   const mockTrafficData = [
     { day: 'Mon', orders: 120, deliveries: 45 },

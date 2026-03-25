@@ -5,6 +5,7 @@ export interface Product {
   image: string;
   cashPrice: number;
   bnplPrice: number;
+  retailPrice: number;
   savings: number;
   savingsPercent: number;
   unit: string;

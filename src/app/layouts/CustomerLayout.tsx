@@ -1,10 +1,20 @@
 import { Outlet, useNavigate, useLocation } from 'react-router';
+import { useState, useEffect } from 'react';
 import svgPaths from '../../imports/svg-o7bl7wk5vo';
 import imgImageValu from 'figma:asset/dd263ea74eea751edbe19c75046ad4c686cd593c.png';
 
 export default function CustomerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [accountType, setAccountType] = useState(sessionStorage.getItem('accountType') || 'normal');
+
+  useEffect(() => {
+    const handleAccountChange = () => {
+      setAccountType(sessionStorage.getItem('accountType') || 'normal');
+    };
+    window.addEventListener('accountTypeChanged', handleAccountChange);
+    return () => window.removeEventListener('accountTypeChanged', handleAccountChange);
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname.includes(path);
@@ -136,7 +146,9 @@ export default function CustomerLayout() {
             </div>
             <div>
               <p className="font-medium text-[14px] text-[#364153] tracking-[-0.15px]">Mama Shop #493</p>
-              <p className="font-medium text-[12px] text-[#155dfc]">Trade Prime</p>
+              <p className={`font-medium text-[12px] ${accountType === 'prime' ? 'text-[#155dfc]' : 'text-gray-500'}`}>
+                {accountType === 'prime' ? 'Trade Prime' : 'Normal Account'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-70" onClick={() => navigate('/')}>
