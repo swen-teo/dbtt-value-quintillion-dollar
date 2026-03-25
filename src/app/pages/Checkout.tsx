@@ -11,6 +11,10 @@ export default function Checkout() {
   const [selectedOutlet, setSelectedOutlet] = useState<OutletLocation | null>(null);
   const [pickupDate, setPickupDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bnpl'>('card');
+  const [errorObj, setErrorObj] = useState<string | null>(null);
+
+  const accountType = sessionStorage.getItem('accountType') || 'normal';
+  const isGrabLinked = sessionStorage.getItem('grabLinked') === 'true';
 
   useEffect(() => {
     loadCart();
@@ -62,11 +66,25 @@ export default function Checkout() {
   });
 
   const handlePlaceOrder = () => {
+    setErrorObj(null);
+    const totalCount = calculateTotal();
+
+    if (paymentMethod === 'bnpl') {
+      if (accountType !== 'prime') {
+        setErrorObj('A Trade Prime Plan subscription is required to use Grab Pay Later.');
+        return;
+      }
+      if (!isGrabLinked) {
+        setErrorObj('Please link your Grab Account first in the Account settings.');
+        return;
+      }
+    }
+
     // Save order to localStorage
     const orderData = {
       id: `ORD-${Date.now()}`,
       items: cartItems,
-      total,
+      total: totalCount,
       paymentMethod,
       pickupType,
       pickupLocation: selectedOutlet?.name || '',
@@ -102,19 +120,55 @@ export default function Checkout() {
                   onClick={() => setPaymentMethod('bnpl')}
                   className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                     paymentMethod === 'bnpl'
-                      ? 'border-[#155dfc] bg-blue-50'
-                      : 'border-[#e5e7eb] hover:border-[#155dfc]'
-                  }`}
+                      ? 'border-[#00b14f] bg-[#00b14f]/5'
+                      : 'border-[#e5e7eb] hover:border-[#00b14f]'
+                  } ${accountType !== 'prime' ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-[#101828]">Buy Now, Pay Later (BNPL)</span>
+                    <span className="font-bold text-[#101828]">Grab Pay Later</span>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === 'bnpl' ? 'border-[#155dfc]' : 'border-gray-300'
+                      paymentMethod === 'bnpl' ? 'border-[#00b14f]' : 'border-gray-300'
                     }`}>
-                      {paymentMethod === 'bnpl' && <div className="w-3 h-3 rounded-full bg-[#155dfc]" />}
+                      {paymentMethod === 'bnpl' && <div className="w-3 h-3 rounded-full bg-[#00b14f]" />}
                     </div>
                   </div>
-                  <p className="text-sm text-[#6a7282]">Pay in 4 interest-free weekly installments.</p>
+                  <p className="text-sm text-[#6a7282]">Split into 4 interest-free installments with Grab.</p>
+                  {accountType === 'prime' ? (
+                    <div className="mt-2 space-y-2">
+                       {isGrabLinked ? (
+                         <div className="bg-[#00b14f]/10 rounded p-2 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#00b14f]" />
+                            <span className="text-xs font-bold text-[#00b14f]">Grab Account Linked</span>
+                         </div>
+                       ) : (
+                         <div className="bg-amber-50 border border-amber-100 rounded p-2 flex flex-col gap-2">
+                            <span className="text-xs font-bold text-amber-700">Grab Linking Required</span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/customer/account?tab=credit');
+                              }}
+                              className="text-white bg-amber-600 px-3 py-1.5 rounded text-[10px] font-bold hover:bg-amber-700 self-start shadow-sm"
+                            >
+                              Link Account Now
+                            </button>
+                         </div>
+                       )}
+                    </div>
+                  ) : (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-xs font-bold text-red-600 flex flex-col gap-1">
+                      <span>Trade Prime Plan Required</span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/customer/account?tab=subscription');
+                        }}
+                        className="text-white bg-red-500 px-2 py-1 rounded text-[10px] hover:bg-red-600 self-start"
+                      >
+                        Upgrade Now
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div
@@ -338,6 +392,12 @@ export default function Checkout() {
                       Ready for pickup in 1 hour
                     </p>
                   )}
+                </div>
+              )}
+
+              {errorObj && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm font-medium">
+                  {errorObj}
                 </div>
               )}
 

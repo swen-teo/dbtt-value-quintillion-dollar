@@ -115,32 +115,54 @@ export default function OrderConfirmation() {
           </div>
 
           {/* Payment Info */}
-          <div className="p-8 border-b-2 border-gray-100 bg-blue-50">
+          <div className={`p-8 border-b-2 border-gray-100 ${order.paymentMethod === 'bnpl' ? 'bg-[#00b14f]/5' : 'bg-orange-50'}`}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                order.paymentMethod === 'bnpl' 
+                  ? 'bg-gradient-to-br from-[#00b14f] to-[#018a3e] shadow-green-500/20' 
+                  : 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-orange-500/20'
+              }`}>
                 <CreditCard className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Payment Plan</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {order.paymentMethod === 'bnpl' ? 'Payment Plan' : 'Payment Method'}
+              </h2>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border-2 border-blue-200">
-              <p className="text-gray-700 mb-4">
-                <span className="font-bold text-lg">Buy Now Pay Later (BNPL)</span> - {order.installments} Weekly Installments
-              </p>
-              
-              <div className="grid grid-cols-4 gap-3">
-                {Array.from({ length: order.installments }).map((_, index) => (
-                  <div key={index} className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-                    <p className="text-xs text-blue-900 mb-1">Week {index + 1}</p>
-                    <p className="font-bold text-lg text-gray-900">${order.installmentAmount.toFixed(2)}</p>
+            <div className={`bg-white rounded-2xl p-6 border-2 ${
+              order.paymentMethod === 'bnpl' ? 'border-[#00b14f]/30' : 'border-orange-200'
+            }`}>
+              {order.paymentMethod === 'bnpl' ? (
+                <>
+                  <p className="text-gray-700 mb-4">
+                    <span className="font-bold text-lg text-[#00b14f]">Grab Pay Later</span> - {order.installments} Weekly Installments
+                  </p>
+                  
+                  <div className="grid grid-cols-4 gap-3">
+                    {Array.from({ length: order.installments }).map((_, index) => (
+                      <div key={index} className="bg-[#00b14f]/5 border border-[#00b14f]/20 rounded-xl p-3 text-center">
+                        <p className="text-xs text-green-900 mb-1">Week {index + 1}</p>
+                        <p className="font-bold text-lg text-gray-900">${order.installmentAmount.toFixed(2)}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              <p className="text-sm text-gray-600 mt-4 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                0% interest • No hidden fees • Auto-pay enabled
-              </p>
+                  <p className="text-sm text-gray-600 mt-4 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[#00b14f]" />
+                    0% interest • Automated via Grab • Seamlessly split
+                  </p>
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-lg text-gray-900">Credit / Debit Card</p>
+                    <p className="text-sm text-gray-600">Securely processed immediately</p>
+                  </div>
+                  <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold">
+                    Paid Successfully
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

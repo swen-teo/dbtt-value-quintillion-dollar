@@ -12,7 +12,6 @@ export default function Onboarding() {
     email: '',
     phone: '',
     address: '',
-    creditLimit: 5000,
     accountType: 'prime', // 'prime' or 'normal'
   });
 
@@ -69,7 +68,7 @@ export default function Onboarding() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h1 className="font-bold text-5xl text-gray-900 mb-4 tracking-tight">
-                Welcome to Valu$ Trade Prime
+                Valu$ Trade Prime Plan
               </h1>
               <p className="text-xl text-gray-600">
                 Join Singapore's leading B2B wholesale platform with exclusive benefits
@@ -82,9 +81,9 @@ export default function Onboarding() {
                 <div className="w-16 h-16 bg-gradient-to-br from-[#ff6900] to-[#ff8534] rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
                   <CreditCard className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="font-bold text-2xl text-gray-900 mb-3">Buy Now Pay Later</h3>
+                <h3 className="font-bold text-2xl text-gray-900 mb-3">Grab Pay Later</h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  Split your payments into 4 interest-free installments. No upfront capital required.
+                  Exclusive for Subscribers: Split your payments into 4 interest-free installments seamlessly with Grab Pay Later.
                 </p>
                 <ul className="space-y-3">
                   <li className="flex items-center gap-3 text-sm text-gray-700">
@@ -97,7 +96,7 @@ export default function Onboarding() {
                     <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span>Up to $5,000 Credit Limit</span>
+                    <span>Instant Approval</span>
                   </li>
                   <li className="flex items-center gap-3 text-sm text-gray-700">
                     <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -325,114 +324,65 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3: Credit Limit Selection */}
+        {/* Step 3: Confirmation */}
         {step === 3 && (
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="font-bold text-3xl text-gray-900 mb-2">Select Your Credit Limit</h2>
-              <p className="text-gray-600">Choose a BNPL credit limit that works for your business</p>
+              <h2 className="font-bold text-3xl text-gray-900 mb-2">Confirm Your Details</h2>
+              <p className="text-gray-600">Please review your business information before completing registration</p>
             </div>
 
-            <div className="space-y-4 mb-8">
-              {[3000, 5000, 10000].map((limit) => (
-                <div
-                  key={limit}
-                  onClick={() => setFormData({ ...formData, creditLimit: limit })}
-                  className={`bg-white rounded-2xl border-2 p-6 cursor-pointer transition-all ${
-                    formData.creditLimit === limit
-                      ? 'border-[#ff6900] shadow-xl'
-                      : 'border-gray-200 hover:border-[#ff6900] hover:shadow-lg'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                        formData.creditLimit === limit
-                          ? 'border-[#ff6900] bg-[#ff6900]'
-                          : 'border-gray-300'
-                      }`}>
-                        {formData.creditLimit === limit && (
-                          <CheckCircle className="w-4 h-4 text-white" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-bold text-2xl text-gray-900">${limit.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600">Monthly Credit Limit</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">Weekly Payment</p>
-                      <p className="font-bold text-lg text-[#155dfc]">
-                        ${(limit / 4).toLocaleString()}
-                      </p>
-                    </div>
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg mb-8">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Shop Name</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.shopName || '-'}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Business UEN</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.uen || '-'}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Contact Person</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.contactPerson || '-'}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Phone</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.phone || '-'}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Email</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.email || '-'}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Shop Address</h4>
+                    <p className="text-lg font-semibold text-gray-900">{formData.address || '-'}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8">
-              <div className="flex items-start gap-3">
-                <Clock className="w-6 h-6 text-[#155dfc] flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-2">How BNPL Works</h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#155dfc] flex-shrink-0 mt-0.5" />
-                      <span>Pay 25% of your order value today</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#155dfc] flex-shrink-0 mt-0.5" />
-                      <span>Remaining 75% split into 3 weekly payments</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#155dfc] flex-shrink-0 mt-0.5" />
-                      <span>No interest, no hidden fees</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#155dfc] flex-shrink-0 mt-0.5" />
-                      <span>Automatic deductions from your account</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-4">
-                <button
-                  onClick={handleBack}
-                  className="w-1/3 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-bold hover:border-gray-400 transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => {
-                    setFormData({ ...formData, accountType: 'prime' });
-                    sessionStorage.setItem('accountType', 'prime');
-                    sessionStorage.setItem('creditLimit', formData.creditLimit.toString());
-                    handleNext();
-                  }}
-                  className="flex-1 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                >
-                  Complete Trade Prime Setup
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="mt-4">
-                <button
-                  onClick={() => {
-                    setFormData({ ...formData, accountType: 'normal' });
-                    sessionStorage.setItem('accountType', 'normal');
-                    sessionStorage.setItem('creditLimit', '0');
-                    handleNext();
-                  }}
-                  className="w-full border-2 border-gray-200 text-gray-600 bg-white px-6 py-4 rounded-xl font-bold hover:border-[#155dfc] hover:text-[#155dfc] hover:bg-blue-50 transition-all shadow-sm"
-                >
-                  Skip BNPL for now and continue with Normal Business Account
-                </button>
-              </div>
+            <div className="flex gap-4">
+              <button
+                onClick={handleBack}
+                className="w-1/3 border-2 border-gray-300 text-gray-700 px-6 py-4 rounded-xl font-bold hover:border-gray-400 transition-all text-lg"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('accountType', 'normal');
+                  sessionStorage.setItem('creditLimit', '0');
+                  sessionStorage.setItem('usedCredit', '0');
+                  window.dispatchEvent(new Event('accountTypeChanged'));
+                  handleNext();
+                }}
+                className="flex-1 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-6 py-4 rounded-xl font-bold hover:shadow-xl transition-all flex items-center justify-center gap-2 text-lg"
+              >
+                Complete Registration
+                <CheckCircle className="w-6 h-6" />
+              </button>
             </div>
           </div>
         )}
