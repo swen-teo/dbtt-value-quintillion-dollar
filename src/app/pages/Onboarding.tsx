@@ -393,6 +393,8 @@ export default function Onboarding() {
                 <button
                   onClick={() => {
                     setFormData({ ...formData, accountType: 'prime' });
+                    sessionStorage.setItem('accountType', 'prime');
+                    sessionStorage.setItem('creditLimit', formData.creditLimit.toString());
                     handleNext();
                   }}
                   className="flex-1 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all flex items-center justify-center gap-2"
@@ -406,6 +408,8 @@ export default function Onboarding() {
                 <button
                   onClick={() => {
                     setFormData({ ...formData, accountType: 'normal' });
+                    sessionStorage.setItem('accountType', 'normal');
+                    sessionStorage.setItem('creditLimit', '0');
                     handleNext();
                   }}
                   className="w-full border-2 border-gray-200 text-gray-600 bg-white px-6 py-4 rounded-xl font-bold hover:border-[#155dfc] hover:text-[#155dfc] hover:bg-blue-50 transition-all shadow-sm"
