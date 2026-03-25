@@ -12,6 +12,14 @@ export default function Checkout() {
   const [pickupDate, setPickupDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bnpl'>('card');
   const [errorObj, setErrorObj] = useState<string | null>(null);
+  
+  // Card Details State
+  const [cardDetails, setCardDetails] = useState({
+    number: '',
+    expiry: '',
+    cvc: '',
+    name: ''
+  });
 
   const accountType = sessionStorage.getItem('accountType') || 'normal';
   const isGrabLinked = sessionStorage.getItem('grabLinked') === 'true';
@@ -78,6 +86,23 @@ export default function Checkout() {
         setErrorObj('Please link your Grab Account first in the Account settings.');
         return;
       }
+    }
+
+    if (paymentMethod === 'card') {
+      if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvc || !cardDetails.name) {
+        setErrorObj('Please fill in all card details for the payment.');
+        return;
+      }
+    }
+
+    if (!selectedOutlet) {
+      setErrorObj('Please select a pickup location.');
+      return;
+    }
+
+    if (pickupType === 'scheduled' && !pickupDate) {
+      setErrorObj('Please select a pickup date.');
+      return;
     }
 
     // Save order to localStorage
@@ -196,22 +221,50 @@ export default function Checkout() {
                   <h3 className="font-bold text-[#101828] mb-4">Enter Card Details</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
-                      <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
+                      <input 
+                        type="text" 
+                        autoComplete="off"
+                        placeholder="0000 0000 0000 0000" 
+                        value={cardDetails.number}
+                        onChange={(e) => setCardDetails({...cardDetails, number: e.target.value})}
+                        className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all" 
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                        <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Validity</label>
+                        <input 
+                          type="text" 
+                          autoComplete="off"
+                          placeholder="MM/YY" 
+                          value={cardDetails.expiry}
+                          onChange={(e) => setCardDetails({...cardDetails, expiry: e.target.value})}
+                          className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all" 
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">CVC</label>
-                        <input type="password" placeholder="123" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Verification</label>
+                        <input 
+                          type="password" 
+                          autoComplete="off"
+                          placeholder="123" 
+                          value={cardDetails.cvc}
+                          onChange={(e) => setCardDetails({...cardDetails, cvc: e.target.value})}
+                          className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all" 
+                        />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
-                      <input type="text" placeholder="John Tan" className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Holder</label>
+                      <input 
+                        type="text" 
+                        autoComplete="off"
+                        placeholder="John Tan" 
+                        value={cardDetails.name}
+                        onChange={(e) => setCardDetails({...cardDetails, name: e.target.value})}
+                        className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all" 
+                      />
                     </div>
                   </div>
                 </div>

@@ -7,10 +7,12 @@ export default function CustomerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [accountType, setAccountType] = useState(sessionStorage.getItem('accountType') || 'normal');
+  const [shopName, setShopName] = useState(sessionStorage.getItem('shopName') || 'New Merchant');
 
   useEffect(() => {
     const handleAccountChange = () => {
       setAccountType(sessionStorage.getItem('accountType') || 'normal');
+      setShopName(sessionStorage.getItem('shopName') || 'New Merchant');
     };
     window.addEventListener('accountTypeChanged', handleAccountChange);
     return () => window.removeEventListener('accountTypeChanged', handleAccountChange);
@@ -145,7 +147,7 @@ export default function CustomerLayout() {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-[14px] text-[#364153] tracking-[-0.15px]">Mama Shop #493</p>
+              <p className="font-medium text-[14px] text-[#364153] tracking-[-0.15px]">{shopName}</p>
               <p className={`font-medium text-[12px] ${accountType === 'prime' ? 'text-[#155dfc]' : 'text-gray-500'}`}>
                 {accountType === 'prime' ? 'Trade Prime' : 'Normal Account'}
               </p>
