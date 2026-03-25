@@ -14,12 +14,12 @@ export default function Account() {
   const initialUsedCredit = parseInt(sessionStorage.getItem('usedCredit') || '0', 10);
 
   const [customer, setCustomer] = useState({
-    shopName: 'Mama Shop #493',
-    uen: '201012345C',
-    contactPerson: 'John Tan',
-    email: 'john.tan@mamashop493.com',
-    phone: '+65 9123 4567',
-    address: '123 Hougang Ave 3, #01-234, Singapore 530123',
+    shopName: sessionStorage.getItem('shopName') || 'New Merchant',
+    uen: sessionStorage.getItem('uen') || '201012345C',
+    contactPerson: sessionStorage.getItem('contactPerson') || 'New User',
+    email: sessionStorage.getItem('email') || 'user@example.com',
+    phone: sessionStorage.getItem('phone') || '+65 0000 0000',
+    address: sessionStorage.getItem('address') || 'Singapore',
     creditLimit: initialCreditLimit,
     usedCredit: initialUsedCredit,
     availableCredit: Math.max(0, initialCreditLimit - initialUsedCredit),
@@ -47,6 +47,12 @@ export default function Account() {
       const currentUsedCredit = parseInt(sessionStorage.getItem('usedCredit') || '0', 10);
       setCustomer(prev => ({
         ...prev,
+        shopName: sessionStorage.getItem('shopName') || prev.shopName,
+        uen: sessionStorage.getItem('uen') || prev.uen,
+        contactPerson: sessionStorage.getItem('contactPerson') || prev.contactPerson,
+        email: sessionStorage.getItem('email') || prev.email,
+        phone: sessionStorage.getItem('phone') || prev.phone,
+        address: sessionStorage.getItem('address') || prev.address,
         creditLimit: currentCreditLimit,
         usedCredit: currentUsedCredit,
         availableCredit: Math.max(0, currentCreditLimit - currentUsedCredit),
@@ -718,20 +724,20 @@ export default function Account() {
                         </div>
                         <div className="p-8 space-y-4">
                            <div>
-                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Card Number</label>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Number</label>
                               <div className="relative">
                                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                 <input type="text" placeholder="**** **** **** 1234" className="w-full pl-12 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
+                                 <input type="text" autoComplete="off" placeholder="**** **** **** 1234" className="w-full pl-12 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
                               </div>
                            </div>
                            <div className="grid grid-cols-2 gap-4">
                               <div>
-                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Expiry Date</label>
-                                 <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
+                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Validity</label>
+                                 <input type="text" autoComplete="off" placeholder="MM/YY" className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
                               </div>
                               <div>
-                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">CVV</label>
-                                 <input type="text" placeholder="***" className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
+                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Verification</label>
+                                 <input type="text" autoComplete="off" placeholder="***" className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
                               </div>
                            </div>
                            <button 

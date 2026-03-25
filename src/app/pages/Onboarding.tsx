@@ -16,6 +16,16 @@ export default function Onboarding() {
   });
 
   const handleNext = () => {
+    if (step === 2) {
+      const requiredFields = ['shopName', 'uen', 'contactPerson', 'email', 'phone', 'address'];
+      const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+      
+      if (missingFields.length > 0) {
+        alert('Please fill in all business information fields before continuing.');
+        return;
+      }
+    }
+
     if (step < 3) {
       setStep(step + 1);
     } else {
@@ -373,6 +383,12 @@ export default function Onboarding() {
               <button
                 onClick={() => {
                   sessionStorage.setItem('accountType', 'normal');
+                  sessionStorage.setItem('shopName', formData.shopName);
+                  sessionStorage.setItem('uen', formData.uen || '');
+                  sessionStorage.setItem('contactPerson', formData.contactPerson || '');
+                  sessionStorage.setItem('email', formData.email || '');
+                  sessionStorage.setItem('phone', formData.phone || '');
+                  sessionStorage.setItem('address', formData.address || '');
                   sessionStorage.setItem('creditLimit', '0');
                   sessionStorage.setItem('usedCredit', '0');
                   window.dispatchEvent(new Event('accountTypeChanged'));
