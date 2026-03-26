@@ -61,6 +61,32 @@ This project leverages the latest frontend technologies for a responsive, high-p
     ```bash
     npm run build
     ```
+## 2. Running the Forecasting Service 
+1. **cd to forecasting_service folder**
+   cd forecasting_service
+
+2. **# Create a virtual environment**
+   python -m venv venv
+
+3. **# Activate the virtual environment**
+    # On Windows:
+    .\venv\Scripts\activate
+    # On Mac/Linux:
+    source venv/bin/activate
+4. **Start the service**
+   npm start
+   
+5. **OPTIONAL (ONLY if your SQL database has a password that is not empty)**
+    # Install required packages (OPTIONAL if you set your own DB password)
+    pip install cryptography
+   
+   then update all the files, Open the following files and update the DB_PASS variable with your actual MySQL password:
+   
+    forecasting_service/app.py (Line ~30)
+    forecasting_service/forecast.py (Line ~27)    
+    forecasting_service/init_db.py (Line ~15)    
+    Note: If a .env file exists in the root of forecasting_service, simply update the DB_PASS= line there instead of editing the .py files individually.
+
 
 ---
 
