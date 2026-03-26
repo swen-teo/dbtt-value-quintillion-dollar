@@ -107,17 +107,29 @@ export default function Checkout() {
 
     // Save order to localStorage
     const orderData = {
-      id: `ORD-${Date.now()}`,
+      id: `ORD-${Date.now().toString().slice(-4)}`,
       items: cartItems,
       total: totalCount,
       paymentMethod,
       pickupType,
       pickupLocation: selectedOutlet?.name || '',
-      pickupDate,
+      pickupAddress: selectedOutlet?.address || '',
+      pickupDate: pickupDate || new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
+      status: 'Pending',
     };
     
     localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    
+    // Append to Order History
+    try {
+      const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]');
+      allOrders.push(orderData);
+      localStorage.setItem('allOrders', JSON.stringify(allOrders));
+    } catch (e) {
+      localStorage.setItem('allOrders', JSON.stringify([orderData]));
+    }
+
     localStorage.removeItem('cart');
     
     navigate('/customer/order-confirmation');
@@ -239,7 +251,15 @@ export default function Checkout() {
                           autoComplete="off"
                           placeholder="MM/YY" 
                           value={cardDetails.expiry}
-                          onChange={(e) => setCardDetails({...cardDetails, expiry: e.target.value})}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/\D/g, '');
+                            if (val.length > 2) {
+                              val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                            } else {
+                              val = val.substring(0, 2);
+                            }
+                            setCardDetails({...cardDetails, expiry: val});
+                          }}
                           className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all" 
                         />
                       </div>

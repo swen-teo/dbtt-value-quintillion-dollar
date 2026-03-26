@@ -207,21 +207,13 @@ export default function OrderConfirmation() {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <button
-            onClick={() => navigate('/customer/orders')}
+            onClick={() => navigate('/customer/my-orders')}
             className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white py-4 rounded-2xl font-bold hover:shadow-xl hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
           >
             View Order Status
             <ArrowRight className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => navigate('/customer/payments')}
-            className="bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white py-4 rounded-2xl font-bold hover:shadow-xl hover:shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
-          >
-            Payment Schedule
-            <CreditCard className="w-5 h-5" />
           </button>
 
           <button className="border-2 border-gray-300 text-gray-700 py-4 rounded-2xl font-bold hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">

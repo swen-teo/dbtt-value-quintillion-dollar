@@ -382,6 +382,8 @@ export default function Onboarding() {
               </button>
               <button
                 onClick={() => {
+                  sessionStorage.clear();
+                  localStorage.clear();
                   sessionStorage.setItem('accountType', 'normal');
                   sessionStorage.setItem('shopName', formData.shopName);
                   sessionStorage.setItem('uen', formData.uen || '');

@@ -1,41 +1,64 @@
-import { useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, ChevronLeft, ChevronRight, Package, MapPin, X, ArrowRight, CreditCard, Shield } from 'lucide-react';
 
 export default function MyOrders() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [dateFrom, setDateFrom] = useState('01/01/2026');
-  const [dateTo, setDateTo] = useState('22/03/2026');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [lastOrder, setLastOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+  useEffect(() => {
+    const allOrdersStr = localStorage.getItem('allOrders');
+    const lastOrderStr = localStorage.getItem('lastOrder');
+    
+    if (allOrdersStr) {
+      const all = JSON.parse(allOrdersStr);
+      // Sort by date descending
+      const sorted = [...all].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(sorted);
+      setLastOrder(sorted[0]);
+    } else if (lastOrderStr) {
+      const saved = JSON.parse(lastOrderStr);
+      setLastOrder(saved);
+      setOrders([saved]);
+    }
+  }, []);
+
+  const markAsCollected = (orderId: string) => {
+    const freshOrders = JSON.parse(localStorage.getItem('allOrders') || '[]');
+    const updated = freshOrders.map((o: any) => o.id === orderId ? { ...o, status: 'Collected' } : o);
+    setOrders(updated);
+    localStorage.setItem('allOrders', JSON.stringify(updated));
+    // Update lastOrder too if it was this one
+    if (lastOrder?.id === orderId) {
+      setLastOrder({ ...lastOrder, status: 'Collected' });
+    }
+  };
 
   const stats = [
-    { label: 'TOTAL ORDERS', value: '87', subtitle: 'Since Jan 2025', color: 'border-blue-200 bg-blue-50' },
-    { label: 'PENDING', value: '2', subtitle: 'Awaiting confirmation', color: 'border-orange-200 bg-orange-50' },
-    { label: 'READY FOR PICKUP', value: '3', subtitle: 'Awaiting collection', color: 'border-purple-200 bg-purple-50' },
-    { label: 'COLLECTED', value: '82', subtitle: '94.2% on schedule', color: 'border-green-200 bg-green-50' },
+    { label: 'TOTAL ORDERS', value: orders.length.toString(), subtitle: 'Since Mar 2026', color: 'border-blue-200 bg-blue-50' },
+    { label: 'PENDING', value: orders.filter(o => o.status === 'Pending').length.toString(), subtitle: 'Awaiting confirmation', color: 'border-orange-200 bg-orange-50' },
+    { label: 'READY FOR PICKUP', value: orders.filter(o => o.status === 'Ready For Pickup').length.toString(), subtitle: 'Awaiting collection', color: 'border-purple-200 bg-purple-50' },
+    { label: 'COLLECTED', value: orders.filter(o => o.status === 'Collected').length.toString(), subtitle: '94.2% on schedule', color: 'border-green-200 bg-green-50' },
   ];
+
+  const getStatusStep = (status: string): number => {
+    switch(status) {
+      case 'Pending': return 1;
+      case 'Ready For Pickup': return 4;
+      case 'Collected': return 5;
+      case 'Cancelled': return -1;
+      default: return 1;
+    }
+  };
+
+  const currentStep = lastOrder ? getStatusStep(lastOrder.status) : 0;
 
   const orderProgress = [
-    { step: 1, label: 'Placed', date: 'Mar 22', status: 'completed' },
-    { step: 2, label: 'Confirmed', date: 'Pending', status: 'active' },
-    { step: 3, label: 'Picked', date: '', status: 'upcoming' },
-    { step: 4, label: 'Ready', date: '', status: 'upcoming' },
-    { step: 5, label: 'Collected', date: '', status: 'upcoming' },
-  ];
-
-  const activeOrders = [
-    { id: 'ORD-4832', date: 'Mar 22, 2026', items: '12 Items', total: '$2,450.00', status: 'Pending', statusColor: 'bg-orange-100 text-orange-700', pickupBy: '—', action: 'View' },
-    { id: 'ORD-4831', date: 'Mar 18, 2026', items: '28 Items', total: '$5,120.00', status: 'Ready For Pickup', statusColor: 'bg-green-100 text-green-700', pickupBy: 'Mar 23', action: 'Collect', actionColor: 'bg-[#ff6900]' },
-    { id: 'ORD-4830', date: 'Mar 17, 2026', items: '8 Items', total: '$1,860.00', status: 'Ready For Pickup', statusColor: 'bg-green-100 text-green-700', pickupBy: 'Mar 22', action: 'Track', actionColor: 'bg-[#ff6900]' },
-    { id: 'ORD-4829', date: 'Mar 16, 2026', items: '6 Items', total: '$980.00', status: 'Packed', statusColor: 'bg-purple-100 text-purple-700', pickupBy: 'Mar 22', action: 'View' },
-    { id: 'ORD-4828', date: 'Mar 15, 2026', items: '15 Items', total: '$3,200.00', status: 'Pending', statusColor: 'bg-orange-100 text-orange-700', pickupBy: '—', action: 'View' },
-  ];
-
-  const orderHistory = [
-    { id: 'ORD-4825', date: 'Mar 12, 2026', items: '20 Items', total: '$4,560.00', status: 'Collected', statusColor: 'bg-green-100 text-green-700', action: 'Reorder' },
-    { id: 'ORD-4818', date: 'Mar 8, 2026', items: '35 Items', total: '$7,230.00', status: 'Collected', statusColor: 'bg-green-100 text-green-700', action: 'Reorder' },
-    { id: 'ORD-4810', date: 'Mar 4, 2026', items: '18 Items', total: '$3,890.00', status: 'Collected', statusColor: 'bg-green-100 text-green-700', action: 'Reorder' },
-    { id: 'ORD-4799', date: 'Feb 28, 2026', items: '42 Items', total: '$9,100.00', status: 'Collected', statusColor: 'bg-green-100 text-green-700', action: 'Reorder' },
-    { id: 'ORD-4790', date: 'Feb 24, 2026', items: '5 Items', total: '$680.00', status: 'Cancelled', statusColor: 'bg-red-100 text-red-700', action: 'Details' },
-    { id: 'ORD-4782', date: 'Feb 20, 2026', items: '30 Items', total: '$6,450.00', status: 'Collected', statusColor: 'bg-green-100 text-green-700', action: 'Reorder' },
+    { step: 1, label: 'Placed', status: currentStep >= 1 ? 'completed' : 'upcoming' },
+    { step: 2, label: 'Confirmed', status: currentStep >= 2 ? 'completed' : currentStep === 1 ? 'active' : 'upcoming' },
+    { step: 3, label: 'Picked', status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'upcoming' },
+    { step: 4, label: 'Ready', status: currentStep >= 4 ? 'completed' : currentStep === 3 ? 'active' : 'upcoming' },
+    { step: 5, label: 'Collected', status: currentStep >= 5 ? 'completed' : currentStep === 4 ? 'active' : 'upcoming' },
   ];
 
   return (
@@ -48,7 +71,7 @@ export default function MyOrders() {
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">
             <Calendar className="w-4 h-4" />
-            <span>March 22, 2026</span>
+            <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </div>
         </div>
 
@@ -67,11 +90,18 @@ export default function MyOrders() {
         <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-8 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Latest Order — ORD-4832</h2>
-              <p className="text-sm text-gray-600">12 items · $2,450.00 · Placed Mar 22, 2026</p>
+              <h2 className="text-xl font-bold text-gray-900">Latest Order — {lastOrder?.id || 'NO ACTIVE ORDER'}</h2>
+              <p className="text-sm text-gray-600">
+                {lastOrder ? `${lastOrder.items.length} items · $${lastOrder.total.toFixed(2)} · Placed ${new Date(lastOrder.createdAt).toLocaleDateString()}` : 'Please place an order to see its status.'}
+              </p>
             </div>
-            <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-xl font-bold text-sm">
-              Pending
+            <span className={`${
+              lastOrder?.status === 'Collected' ? 'bg-green-100 text-green-700' :
+              lastOrder?.status === 'Ready For Pickup' ? 'bg-purple-100 text-purple-700' :
+              lastOrder?.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+              'bg-orange-100 text-orange-700'
+            } px-4 py-2 rounded-xl font-bold text-sm`}>
+              {lastOrder?.status || 'No Order'}
             </span>
           </div>
 
@@ -92,13 +122,15 @@ export default function MyOrders() {
                     {step.step}
                   </div>
                   <p className="text-sm font-semibold text-gray-700">{step.label}</p>
-                  <p className="text-xs text-gray-500">{step.date}</p>
                 </div>
               ))}
             </div>
             {/* Progress Line */}
             <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 -z-0">
-              <div className="h-full bg-green-600 w-1/5" />
+              <div 
+                className="h-full bg-green-600 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(22,163,74,0.5)]" 
+                style={{ width: `${currentStep > 0 ? (Math.max(0, currentStep - 1) / 4) * 100 : 0}%` }} 
+              />
             </div>
           </div>
         </div>
@@ -121,31 +153,50 @@ export default function MyOrders() {
                 </tr>
               </thead>
               <tbody>
-                {activeOrders.map((order, index) => (
+                {orders.length > 0 ? orders.map((order, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4 font-bold text-gray-900">{order.id}</td>
-                    <td className="py-4 px-4 text-gray-700">{order.date}</td>
-                    <td className="py-4 px-4 text-gray-700">{order.items}</td>
-                    <td className="py-4 px-4 font-bold text-gray-900">{order.total}</td>
+                    <td className="py-4 px-4 text-gray-700">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="py-4 px-4 text-gray-700">{order.items.length} Items</td>
+                    <td className="py-4 px-4 font-bold text-gray-900">${order.total.toFixed(2)}</td>
                     <td className="py-4 px-4">
-                      <span className={`${order.statusColor} px-3 py-1 rounded-full font-semibold text-sm`}>
+                      <span className={`${
+                        order.status === 'Collected' ? 'bg-green-100 text-green-700' : 
+                        order.status === 'Ready For Pickup' ? 'bg-purple-100 text-purple-700' :
+                        'bg-orange-100 text-orange-700'
+                      } px-3 py-1 rounded-full font-semibold text-sm`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-gray-700">{order.pickupBy}</td>
+                    <td className="py-4 px-4 text-gray-700">{order.pickupDate || '—'}</td>
                     <td className="py-4 px-4">
-                      <button
-                        className={`${
-                          order.actionColor || 'bg-white border-2 border-gray-200 text-gray-700'
-                        } px-6 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all ${
-                          order.actionColor ? 'text-white' : ''
-                        }`}
-                      >
-                        {order.action}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => setSelectedOrder(order)}
+                          className="bg-white border-2 border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm hover:border-[#ff6900] hover:text-[#ff6900] transition-all"
+                        >
+                          View
+                        </button>
+                        {order.status === 'Ready For Pickup' && (
+                          <button 
+                            onClick={() => {
+                              if(confirm('Are you at the store and ready to mark this as collected?')) {
+                                markAsCollected(order.id);
+                              }
+                            }}
+                            className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-green-700 transition-all border-2 border-green-600 shadow-sm whitespace-nowrap"
+                          >
+                            Collect Now
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-gray-500 font-medium">No active orders found</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -155,37 +206,7 @@ export default function MyOrders() {
         <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Order History</h2>
-            
-            {/* Date Filter */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm w-32 focus:border-[#ff6900] focus:outline-none"
-                />
-                <Calendar className="w-4 h-4 text-gray-400" />
-              </div>
-              <span className="text-gray-600">to</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm w-32 focus:border-[#ff6900] focus:outline-none"
-                />
-                <Calendar className="w-4 h-4 text-gray-400" />
-              </div>
-              <select className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:border-[#ff6900] focus:outline-none">
-                <option>All Statuses</option>
-                <option>Collected</option>
-                <option>Cancelled</option>
-              </select>
-              <button className="bg-gray-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-gray-800 transition-colors">
-                Apply
-              </button>
-            </div>
+            <div className="text-sm text-gray-500 font-medium italic">Latest business transactions</div>
           </div>
 
           <div className="overflow-x-auto">
@@ -201,63 +222,143 @@ export default function MyOrders() {
                 </tr>
               </thead>
               <tbody>
-                {orderHistory.map((order, index) => (
+                {orders.length > 0 ? orders.map((order, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4 font-bold text-gray-900">{order.id}</td>
-                    <td className="py-4 px-4 text-gray-700">{order.date}</td>
-                    <td className="py-4 px-4 text-gray-700">{order.items}</td>
-                    <td className="py-4 px-4 font-bold text-gray-900">{order.total}</td>
+                    <td className="py-4 px-4 text-gray-700">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="py-4 px-4 text-gray-700">{order.items.length} Items</td>
+                    <td className="py-4 px-4 font-bold text-gray-900">${order.total.toFixed(2)}</td>
                     <td className="py-4 px-4">
-                      <span className={`${order.statusColor} px-3 py-1 rounded-full font-semibold text-sm`}>
+                      <span className={`${
+                        order.status === 'Collected' ? 'bg-green-100 text-green-700' : 
+                        order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-600'
+                      } px-3 py-1 rounded-full font-semibold text-sm`}>
                         {order.status}
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <button className="text-[#ff6900] font-bold text-sm hover:underline">
-                        {order.action}
+                      <button 
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-[#ff6900] font-bold text-sm hover:underline"
+                      >
+                        Details
                       </button>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-gray-500 font-medium">No order history available</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-end gap-2 mt-6">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="w-10 h-10 border-2 border-gray-200 rounded-xl flex items-center justify-center hover:border-[#ff6900] transition-colors disabled:opacity-50"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            {[1, 2, 3].map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 rounded-xl font-bold transition-colors ${
-                  currentPage === page
-                    ? 'bg-[#ff6900] text-white'
-                    : 'border-2 border-gray-200 text-gray-700 hover:border-[#ff6900]'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <span className="text-gray-600 px-2">...</span>
-            <button className="w-10 h-10 border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-[#ff6900] transition-colors">
-              8
-            </button>
-            <button
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="w-10 h-10 border-2 border-gray-200 rounded-xl flex items-center justify-center hover:border-[#ff6900] transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
         </div>
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex items-center justify-between">
+              <div>
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Detailed View</p>
+                <h3 className="text-2xl font-bold tracking-tight">{selectedOrder.id}</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="p-2 hover:bg-white/10 rounded-full transition-all group"
+              >
+                <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+              </button>
+            </div>
+
+            <div className="p-8 max-h-[75vh] overflow-y-auto">
+              {/* Summary Header */}
+              <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-gray-100">
+                 <div>
+                   <p className="text-sm text-gray-500 mb-1">Status</p>
+                   <span className="bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full font-bold text-sm inline-flex items-center gap-2">
+                     <Package className="w-4 h-4" />
+                     Processing
+                   </span>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">Transaction Total</p>
+                    <p className="text-4xl font-black text-gray-900 tracking-tight">${selectedOrder.total.toFixed(2)}</p>
+                 </div>
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-6 mb-8">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Order Items</h4>
+                  <span className="text-gray-400 text-xs font-bold">{selectedOrder.items.length} Product(s)</span>
+                </div>
+                <div className="space-y-3">
+                  {selectedOrder.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors">
+                       <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-gray-200 shadow-sm">
+                          <Package className="w-6 h-6 text-[#ff6900]" />
+                       </div>
+                       <div className="flex-1">
+                          <p className="font-bold text-gray-900 leading-tight">{item.product.name}</p>
+                          <p className="text-xs text-gray-500 mt-1 font-medium">Quantity: {item.quantity}</p>
+                       </div>
+                       <p className="font-black text-gray-900 text-lg">
+                          ${((selectedOrder.paymentMethod === 'bnpl' ? item.product.bnplPrice : item.product.cashPrice) * item.quantity).toFixed(2)}
+                       </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pickup & Payment Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
+                    <div className="flex items-center gap-2 text-indigo-700 mb-3">
+                       <MapPin className="w-4 h-4" />
+                       <span className="text-[10px] font-black uppercase tracking-widest">Pickup Location</span>
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm leading-tight mb-2">{selectedOrder.pickupLocation}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {selectedOrder.pickupDate}
+                    </div>
+                 </div>
+                 <div className="bg-[#00b14f]/5 p-5 rounded-2xl border border-[#00b14f]/20">
+                    <div className="flex items-center gap-2 text-[#00b14f] mb-3">
+                       <CreditCard className="w-4 h-4" />
+                       <span className="text-[10px] font-black uppercase tracking-widest">Payment Method</span>
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm mb-2">
+                       {selectedOrder.paymentMethod === 'bnpl' ? 'Grab Pay Later (4x)' : 'Credit / Debit Card'}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[#00b14f] font-bold">
+                       <Shield className="w-3.5 h-3.5" />
+                       Auth Code: 49X{selectedOrder.id.split('-')[1]}
+                    </div>
+                 </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+               <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                 <Shield className="w-4 h-4 text-[#00b14f]" />
+                 Secure Transaction Verified
+               </div>
+               <button 
+                 onClick={() => setSelectedOrder(null)}
+                 className="bg-gray-900 text-white px-10 py-3.5 rounded-2xl font-bold hover:bg-gray-800 hover:shadow-2xl transition-all shadow-lg"
+               >
+                 Close Details
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
