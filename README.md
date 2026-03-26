@@ -61,32 +61,61 @@ This project leverages the latest frontend technologies for a responsive, high-p
     ```bash
     npm run build
     ```
-## 2. Running the Forecasting Service 
-1. **cd to forecasting_service folder**
-   cd forecasting_service
+## 2. Running the Forecasting Service
 
-2. **# Create a virtual environment**
-   python -m venv venv
+### 1. Navigate to the folder
 
-3. **# Activate the virtual environment**
-    # On Windows:
-    .\venv\Scripts\activate
-    # On Mac/Linux:
-    source venv/bin/activate
-4. **Start the service**
-   npm start
-   
-5. **OPTIONAL (ONLY if your SQL database has a password that is not empty)**
-    # Install required packages (OPTIONAL if you set your own DB password)
-    pip install cryptography
-   
-   then update all the files, Open the following files and update the DB_PASS variable with your actual MySQL password:
-   
-    forecasting_service/app.py (Line ~30)
-    forecasting_service/forecast.py (Line ~27)    
-    forecasting_service/init_db.py (Line ~15)    
-    Note: If a .env file exists in the root of forecasting_service, simply update the DB_PASS= line there instead of editing the .py files individually.
+```bash
+cd forecasting_service
+```
 
+### 2. Create a virtual environment (so your current pip installs do not get affected)
+
+```bash
+python -m venv venv
+```
+
+### 3. Activate the virtual environment
+
+**On Windows:**
+
+```bash
+.\venv\Scripts\activate
+```
+
+**On Mac/Linux:**
+
+```bash
+source venv/bin/activate
+```
+
+### 4. Start the service
+
+```bash
+npm start
+```
+---
+### 5. Optional (Only if your SQL database has a password)
+
+Install required package:
+
+```bash
+pip install cryptography
+```
+
+Then update the `DB_PASS` variable in the following files:
+
+* `forecasting_service/app.py` (~Line 30)
+* `forecasting_service/forecast.py` (~Line 27)
+* `forecasting_service/init_db.py` (~Line 15)
+
+> 💡 If a `.env` file exists in the root of `forecasting_service`, simply update:
+
+```env
+DB_PASS=your_password_here
+```
+
+instead of editing the `.py` files individually.
 
 ---
 
