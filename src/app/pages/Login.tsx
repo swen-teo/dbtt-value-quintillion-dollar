@@ -10,10 +10,44 @@ export default function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    /* Reset mock state on fresh login so it defaults to normal user */
+    /* Reset mock state on fresh login */
     sessionStorage.clear();
-    window.dispatchEvent(new Event('accountTypeChanged'));
-    navigate('/customer/shop');
+    localStorage.clear();
+
+    if (email === 'demo@mamashop.com' && password === 'demo123') {
+      // Seed Existing User State
+      sessionStorage.setItem('accountType', 'prime');
+      sessionStorage.setItem('grabLinked', 'true');
+      sessionStorage.setItem('grabEmail', 'demo@mamashop.com');
+      sessionStorage.setItem('recurringCardLinked', 'true');
+      
+      // Business Profile
+      sessionStorage.setItem('shopName', 'Mama Shop Wholesale');
+      sessionStorage.setItem('contactPerson', 'Retailer Demo');
+      sessionStorage.setItem('email', 'demo@mamashop.com');
+      sessionStorage.setItem('phone', '+65 8888 7777');
+      sessionStorage.setItem('address', '123 Bedok North Rd, #01-45, Singapore 460123');
+      sessionStorage.setItem('uen', '201988888G');
+
+      const demoRecurring = [
+        { id: 'REC-001', name: 'Premium Cola (24x330ml)', qty: 5, frequency: 'Weekly', totalPrice: 112.50, nextDate: 'Apr 02, 2026' },
+        { id: 'REC-002', name: 'Instant Noodles (40 packs)', qty: 10, frequency: 'Monthly', totalPrice: 220.00, nextDate: 'Apr 15, 2026' }
+      ];
+      sessionStorage.setItem('recurringOrders', JSON.stringify(demoRecurring));
+
+      const demoOrders = [
+        { id: 'ORD-9982', createdAt: '2026-03-22T10:00:00Z', total: 1450.00, items: [{ product: { name: 'Bulk Soda' }, quantity: 10 }], status: 'Collected', paymentMethod: 'card', pickupLocation: 'Main Warehouse', pickupDate: '2026-03-24' },
+        { id: 'ORD-9983', createdAt: '2026-03-23T09:15:00Z', total: 320.00, items: [{ product: { name: 'Premium Rice' }, quantity: 2 }], status: 'Cancelled', paymentMethod: 'card', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-24' },
+        { id: 'ORD-9985', createdAt: '2026-03-25T14:30:00Z', total: 840.50, items: [{ product: { name: 'Snack Box' }, quantity: 5 }], status: 'Ready For Pickup', paymentMethod: 'bnpl', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-27' }
+      ];
+      localStorage.setItem('lastOrder', JSON.stringify(demoOrders[2]));
+      localStorage.setItem('allOrders', JSON.stringify(demoOrders));
+      
+      window.dispatchEvent(new Event('accountTypeChanged'));
+      navigate('/customer/shop');
+    } else {
+      alert('Invalid credentials. Access is currently limited to the Demo Account: demo@mamashop.com / demo123');
+    }
   };
 
   return (
@@ -101,7 +135,12 @@ export default function Login() {
         <div className="text-center mb-6">
           <p className="text-sm text-gray-600 mb-3">New to Valu$ Wholesale?</p>
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => {
+              sessionStorage.clear();
+              localStorage.clear();
+              window.dispatchEvent(new Event('accountTypeChanged'));
+              navigate('/onboarding');
+            }}
             className="inline-flex items-center gap-2 text-[#ff6900] font-bold hover:text-[#ff8534] transition-colors"
           >
             Register Your Business

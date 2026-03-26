@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, CreditCard, MapPin, Package, Shield, Star, Award, CheckCircle, XCircle, RefreshCcw, Clock, Box, Smartphone, Link as LinkIcon, Plus, Minus, Search } from 'lucide-react';
+import { User, CreditCard, MapPin, Package, Shield, Star, Award, CheckCircle, XCircle, RefreshCcw, Clock, Box, Smartphone, Link as LinkIcon, Plus, Minus, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { products } from '../data/mockData';
 
@@ -39,7 +39,10 @@ export default function Account() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [selectedQuantities, setSelectedQuantities] = useState<{ [key: string]: number }>({});
-  const [recurringOrders, setRecurringOrders] = useState<any[]>([]);
+  const [recurringOrders, setRecurringOrders] = useState<any[]>(() => {
+    const saved = sessionStorage.getItem('recurringOrders');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     const handleStorageUpdate = () => {
@@ -66,6 +69,16 @@ export default function Account() {
     window.addEventListener('accountTypeChanged', handleStorageUpdate);
     return () => window.removeEventListener('accountTypeChanged', handleStorageUpdate);
   }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem('recurringOrders', JSON.stringify(recurringOrders));
+  }, [recurringOrders]);
+
+  const cancelRecurringOrder = (index: number) => {
+    if (confirm('Are you sure you want to cancel this recurring order?')) {
+      setRecurringOrders(prev => prev.filter((_, i) => i !== index));
+    }
+  };
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 min-h-screen">
@@ -274,8 +287,8 @@ export default function Account() {
                         <h3 className="text-lg font-bold text-gray-900 mb-4 font-outfit uppercase tracking-tight">Connected Accounts</h3>
                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#00b14f] rounded-xl flex items-center justify-center shadow-lg shadow-green-500/10">
-                              <img src="https://static.grab.com/wp-content/uploads/media/images/grab_logo_2021.png" className="w-8 h-8 object-contain brightness-0 invert" alt="Grab" />
+                            <div className="w-12 h-12 bg-[#00b14f] rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                               <span className="text-white font-black text-[14px] italic tracking-tighter">Grab</span>
                             </div>
                             <div>
                                <p className="font-bold text-gray-900">Grab ID Account</p>
@@ -319,7 +332,9 @@ export default function Account() {
                                  <XCircle className="w-6 h-6" />
                                </button>
                                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-black/10">
-                                 <img src="https://static.grab.com/wp-content/uploads/media/images/grab_logo_2021.png" className="w-10 h-10 object-contain" alt="Grab" />
+                                 <div className="w-12 h-12 bg-[#00b14f] rounded-xl flex items-center justify-center">
+                                   <span className="text-white font-black text-[14px] italic tracking-tighter">Grab</span>
+                                 </div>
                                </div>
                                <h3 className="text-xl font-bold">Link Grab Account</h3>
                                <p className="text-white/80 text-sm mt-1 uppercase tracking-widest font-bold">Safe & Secure Flow</p>
@@ -479,12 +494,7 @@ export default function Account() {
                           ))}
                         </div>
                       </div>
-                      <button
-                        onClick={() => navigate('/customer/payments')}
-                        className="w-full bg-gradient-to-r from-[#155dfc] to-[#3b82f6] text-white px-6 py-3 rounded-xl font-bold hover:shadow-xl transition-all"
-                      >
-                        View Payment Schedule
-                      </button>
+
                     </>
                   )}
                 </div>
@@ -583,17 +593,24 @@ export default function Account() {
                                       </div>
                                    </div>
                                 </div>
-                                <div className="text-right flex items-center gap-8">
-                                   <div>
-                                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Quantity</p>
-                                      <p className="text-lg font-bold text-gray-900">{order.qty} Cases</p>
-                                   </div>
-                                   <div className="border-l border-gray-100 pl-8">
-                                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Monthly Deduction</p>
-                                      <p className="text-xl font-black text-indigo-600">${order.totalPrice.toFixed(2)}</p>
-                                      <p className="text-[10px] text-indigo-400 font-bold">Next: {order.nextDate}</p>
-                                   </div>
-                                </div>
+                                 <div className="text-right flex items-center gap-8">
+                                    <div>
+                                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Quantity</p>
+                                       <p className="text-lg font-bold text-gray-900">{order.qty} Cases</p>
+                                    </div>
+                                    <div className="border-l border-gray-100 pl-8">
+                                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Monthly Deduction</p>
+                                       <p className="text-xl font-black text-indigo-600">${order.totalPrice.toFixed(2)}</p>
+                                       <p className="text-[10px] text-indigo-400 font-bold line-clamp-1">Next: {order.nextDate}</p>
+                                    </div>
+                                    <button 
+                                      onClick={() => cancelRecurringOrder(idx)}
+                                      className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                      title="Cancel Recurring Order"
+                                    >
+                                      <Trash2 className="w-5 h-5" />
+                                    </button>
+                                 </div>
                              </div>
                            ))}
                         </div>
@@ -733,7 +750,20 @@ export default function Account() {
                            <div className="grid grid-cols-2 gap-4">
                               <div>
                                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Validity</label>
-                                 <input type="text" autoComplete="off" placeholder="MM/YY" className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" />
+                                  <input 
+                                    type="text" 
+                                    autoComplete="off" 
+                                    placeholder="MM/YY" 
+                                    maxLength={5}
+                                    className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none font-medium" 
+                                    onChange={(e) => {
+                                      let val = e.target.value.replace(/\D/g, '');
+                                      if (val.length > 2) {
+                                        val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                                      } 
+                                      e.target.value = val;
+                                    }}
+                                  />
                               </div>
                               <div>
                                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Verification</label>

@@ -155,6 +155,7 @@ export default function CustomerLayout() {
           </div>
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-70" onClick={() => {
             sessionStorage.clear();
+            localStorage.clear();
             // Also notify any listeners that account type has changed to reset UI
             window.dispatchEvent(new Event('accountTypeChanged'));
             navigate('/');
