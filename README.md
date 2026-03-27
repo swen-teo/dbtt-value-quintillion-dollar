@@ -141,6 +141,7 @@ instead of editing the `.py` files individually.
 ## 🗂️ Project Structure
 
 ```text
+
 /src
   /app
     /components       # Atomic UI components (Buttons, Cards, Inputs)
@@ -158,6 +159,20 @@ instead of editing the `.py` files individually.
 index.html           # HTML entry point
 vite.config.ts       # Vite build configuration
 package.json         # Dependency manifest
+
+/forecasting_service          # Flask-based forecasting microservice
+  /__pycache__                # Python bytecode cache (auto-generated)
+  /static
+    /css
+    /js
+      app.js
+  /templates
+    forecast.html
+  /venv                       # Python virtual environment
+  app.py                      # Flask app entry point
+  forecast.py                 # Forecasting logic
+  init_db.py                  # Database initialisation script
+  requirements.txt            # Python dependencies
 ```
 
 ---
