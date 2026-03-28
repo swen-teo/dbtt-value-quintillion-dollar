@@ -92,7 +92,7 @@ export default function MyOrders() {
             <div>
               <h2 className="text-xl font-bold text-gray-900">Latest Order — {lastOrder?.id || 'NO ACTIVE ORDER'}</h2>
               <p className="text-sm text-gray-600">
-                {lastOrder ? `${lastOrder.items.length} items · $${lastOrder.total.toFixed(2)} · Placed ${new Date(lastOrder.createdAt).toLocaleDateString()}` : 'Please place an order to see its status.'}
+                {lastOrder ? `${lastOrder.items?.length || 0} items · $${(lastOrder.total ?? 0).toFixed(2)} · Placed ${new Date(lastOrder.createdAt).toLocaleDateString()}` : 'Please place an order to see its status.'}
               </p>
             </div>
             <span className={`${
@@ -158,7 +158,7 @@ export default function MyOrders() {
                     <td className="py-4 px-4 font-bold text-gray-900">{order.id}</td>
                     <td className="py-4 px-4 text-gray-700">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="py-4 px-4 text-gray-700">{order.items.length} Items</td>
-                    <td className="py-4 px-4 font-bold text-gray-900">${order.total.toFixed(2)}</td>
+                    <td className="py-4 px-4 font-bold text-gray-900">${(order.total ?? 0).toFixed(2)}</td>
                     <td className="py-4 px-4">
                       <span className={`${
                         order.status === 'Collected' ? 'bg-green-100 text-green-700' : 
@@ -227,7 +227,7 @@ export default function MyOrders() {
                     <td className="py-4 px-4 font-bold text-gray-900">{order.id}</td>
                     <td className="py-4 px-4 text-gray-700">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="py-4 px-4 text-gray-700">{order.items.length} Items</td>
-                    <td className="py-4 px-4 font-bold text-gray-900">${order.total.toFixed(2)}</td>
+                    <td className="py-4 px-4 font-bold text-gray-900">${(order.total ?? 0).toFixed(2)}</td>
                     <td className="py-4 px-4">
                       <span className={`${
                         order.status === 'Collected' ? 'bg-green-100 text-green-700' : 
@@ -287,7 +287,7 @@ export default function MyOrders() {
                  </div>
                  <div className="text-right">
                     <p className="text-sm text-gray-500 mb-1 font-medium">Transaction Total</p>
-                    <p className="text-4xl font-black text-gray-900 tracking-tight">${selectedOrder.total.toFixed(2)}</p>
+                    <p className="text-4xl font-black text-gray-900 tracking-tight">${(selectedOrder.total ?? 0).toFixed(2)}</p>
                  </div>
               </div>
 
@@ -304,11 +304,15 @@ export default function MyOrders() {
                           <Package className="w-6 h-6 text-[#ff6900]" />
                        </div>
                        <div className="flex-1">
-                          <p className="font-bold text-gray-900 leading-tight">{item.product.name}</p>
+                          <p className="font-bold text-gray-900 leading-tight">{item.product?.name || 'Unknown Product'}</p>
                           <p className="text-xs text-gray-500 mt-1 font-medium">Quantity: {item.quantity}</p>
                        </div>
                        <p className="font-black text-gray-900 text-lg">
-                          ${((selectedOrder.paymentMethod === 'bnpl' ? item.product.bnplPrice : item.product.cashPrice) * item.quantity).toFixed(2)}
+                          ${((
+                            selectedOrder.paymentMethod === 'bnpl' 
+                              ? (item.product?.bnplPrice ?? item.product?.cashPrice ?? item.product?.price ?? item.price ?? 0)
+                              : (item.product?.cashPrice ?? item.product?.price ?? item.product?.bnplPrice ?? item.price ?? 0)
+                          ) * (item.quantity ?? 1)).toFixed(2)}
                        </p>
                     </div>
                   ))}
