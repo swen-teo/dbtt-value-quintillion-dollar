@@ -1,11 +1,34 @@
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Home, DollarSign, TrendingUp, Truck, ShoppingCart, LayoutDashboard } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 import svgPaths from '../../imports/svg-kqu6c8wr23';
 import imgImageValu from 'figma:asset/dd263ea74eea751edbe19c75046ad4c686cd593c.png';
+import { getStoredAdminLocation } from '../lib/adminLocation';
 
 export default function NewAdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [profile, setProfile] = useState<{ name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const adminId = sessionStorage.getItem('adminId');
+      if (!adminId) return;
+
+      const { data } = await supabase
+        .from('admins')
+        .select('name, role')
+        .eq('id', adminId)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    }
+    fetchProfile();
+  }, []);
+  const adminLocation = getStoredAdminLocation();
 
   const isActive = (path: string) => {
     return location.pathname.includes(path);
@@ -126,13 +149,21 @@ export default function NewAdminLayout() {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-sm text-[#364153]">Valu$ 6767</p>
-              <p className="font-medium text-xs text-[#155dfc]">Trade Prime</p>
+              <p className="font-bold text-sm text-[#1b2a4a] truncate max-w-[150px]">
+                {profile?.name || sessionStorage.getItem('adminName') || 'Valu$ Admin'}
+              </p>
+              <p className="font-bold text-[10px] text-[#ff6900] uppercase tracking-wider">
+                {(profile?.role || sessionStorage.getItem('adminRole'))?.replace(/_/g, ' ') || 'Administrator'}
+              </p>
             </div>
           </div>
           <div
             className="flex items-center gap-2 cursor-pointer hover:opacity-70"
-            onClick={() => navigate('/admin/login')}
+            onClick={() => {
+              sessionStorage.clear();
+              localStorage.clear();
+              navigate('/login');
+            }}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">
               <path
