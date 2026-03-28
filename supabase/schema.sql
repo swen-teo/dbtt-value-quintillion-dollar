@@ -100,6 +100,26 @@ CREATE POLICY "Enable select for anonymous users" ON public.order_items FOR SELE
 
 CREATE POLICY "Enable read access for anonymous users" ON public.customers FOR SELECT USING (true);
 
+-- Hub restock request table.
+CREATE TABLE public.hub_requests (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  shop_name text NOT NULL,
+  hub text NOT NULL,
+  zone text NOT NULL,
+  item text NOT NULL,
+  quantity integer NOT NULL,
+  priority text NOT NULL DEFAULT 'medium',
+  status text NOT NULL DEFAULT 'pending',
+  requested_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.hub_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for hub requests" ON public.hub_requests FOR SELECT USING (true);
+CREATE POLICY "Enable insert for hub requests" ON public.hub_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for hub requests" ON public.hub_requests FOR UPDATE USING (true) WITH CHECK (true);
+
 -- Forecasting tables for the demand planning worker.
 CREATE TABLE public.forecast_categories (
   id integer PRIMARY KEY,
