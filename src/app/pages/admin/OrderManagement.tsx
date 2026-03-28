@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Package, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Search, Filter, Package, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
 import { products } from '../../data/mockData';
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      const rows = [
+        ['Order ID', 'Customer', 'Shop', 'Pickup Type', 'Location', 'Total', 'Status'],
+        ...filteredOrders.map(o => [o.id, o.customerName, o.shopName, o.pickupType, o.pickupLocation, o.totalAmount.toFixed(2), o.status])
+      ];
+      const csv = rows.map(r => r.join(',')).join('\\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders-export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      setIsExporting(false);
+    }, 1000);
+  };
+
 
   useEffect(() => {
     loadOrders();
@@ -61,9 +82,21 @@ export default function OrderManagement() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-[1400px] mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="font-bold text-3xl text-gray-900 mb-2">Order Management</h1>
-          <p className="text-gray-600">Monitor and manage all customer orders</p>
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="font-bold text-3xl text-gray-900 mb-2">Order Management</h1>
+            <p className="text-gray-600">Monitor and manage all customer orders</p>
+          </div>
+          <button 
+            onClick={handleExport}
+            disabled={isExporting}
+            className={`font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 ${
+              isExporting ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-white text-[#1b2a4a] border-2 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Download className="w-5 h-5" />
+            {isExporting ? 'Exporting...' : 'Export Orders'}
+          </button>
         </div>
 
         {/* Filters */}

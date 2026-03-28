@@ -2,6 +2,9 @@ import { useState } from 'react';
 
 export default function LogisticsHubCollections() {
   const [activeTab, setActiveTab] = useState<'hub' | 'heartland'>('hub');
+  const [pickingStatus, setPickingStatus] = useState<Record<string, string>>({});
+  const [manifestStatus, setManifestStatus] = useState<Record<number, string>>({});
+
 
   const orders = [
     { id: 'INV-29031', shop: 'Mama Shop #493', items: 50, time: '25 minutes ago' },
@@ -59,8 +62,20 @@ export default function LogisticsHubCollections() {
                       </p>
                       <p className="text-xs text-[#6a7282]">Ordered {order.time}</p>
                     </div>
-                    <button className="bg-[#ff6900] text-white font-bold text-sm px-6 py-2 rounded-lg hover:bg-[#e65d00] transition-colors">
-                      Start Picking
+                    <button 
+                      onClick={() => {
+                        setPickingStatus(prev => ({ ...prev, [order.id]: 'picking' }));
+                        setTimeout(() => setPickingStatus(prev => ({ ...prev, [order.id]: 'done' })), 2000);
+                      }}
+                      disabled={!!pickingStatus[order.id]}
+                      className={`font-bold text-sm px-6 py-2 rounded-lg transition-colors ${
+                        pickingStatus[order.id] === 'done' 
+                          ? 'bg-green-500 text-white' 
+                          : pickingStatus[order.id] === 'picking'
+                          ? 'bg-gray-400 text-white cursor-wait'
+                          : 'bg-[#ff6900] text-white hover:bg-[#e65d00]'
+                      }`}>
+                      {pickingStatus[order.id] === 'done' ? 'Picked ✅' : pickingStatus[order.id] === 'picking' ? 'Picking...' : 'Start Picking'}
                     </button>
                   </div>
                 ))}
@@ -109,8 +124,20 @@ export default function LogisticsHubCollections() {
                         <p className="text-xs text-[#99a1af]">orders queued</p>
                       </div>
                     </div>
-                    <button className="w-full bg-[#ff6900] text-white font-medium text-sm py-2 rounded-lg hover:bg-[#e65d00] transition-colors">
-                      Generate Dispatch Manifest
+                    <button 
+                      onClick={() => {
+                        setManifestStatus(prev => ({ ...prev, [index]: 'generating' }));
+                        setTimeout(() => setManifestStatus(prev => ({ ...prev, [index]: 'done' })), 2000);
+                      }}
+                      disabled={!!manifestStatus[index]}
+                      className={`w-full font-medium text-sm py-2 rounded-lg transition-colors ${
+                        manifestStatus[index] === 'done' 
+                          ? 'bg-green-500 text-white' 
+                          : manifestStatus[index] === 'generating'
+                          ? 'bg-gray-400 text-white cursor-wait'
+                          : 'bg-[#ff6900] text-white hover:bg-[#e65d00]'
+                      }`}>
+                      {manifestStatus[index] === 'done' ? 'Manifest Generated ✅' : manifestStatus[index] === 'generating' ? 'Generating...' : 'Generate Dispatch Manifest'}
                     </button>
                   </div>
                 ))}

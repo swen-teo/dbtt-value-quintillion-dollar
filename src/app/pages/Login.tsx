@@ -14,6 +14,22 @@ export default function Login() {
     sessionStorage.clear();
     localStorage.clear();
 
+    const demoRecurring = [
+      { id: 'REC-001', name: 'Premium Cola (24x330ml)', qty: 5, frequency: 'Weekly', totalPrice: 112.50, nextDate: 'Apr 02, 2026' },
+      { id: 'REC-002', name: 'Instant Noodles (40 packs)', qty: 10, frequency: 'Monthly', totalPrice: 220.00, nextDate: 'Apr 15, 2026' }
+    ];
+    sessionStorage.setItem('recurringOrders', JSON.stringify(demoRecurring));
+
+    const demoOrders = [
+      { id: 'ORD-9982', shopName: 'Valu$ AMK', customerName: 'Retailer Demo', totalAmount: 1450.00, items: [{ product: { name: 'Bulk Soda' }, quantity: 10 }], status: 'completed', paymentMethod: 'card', pickupLocation: 'Main Warehouse', pickupType: 'immediate', pickupDate: '2026-03-24' },
+      { id: 'ORD-9983', shopName: 'Valu$ Bedok', customerName: 'Retailer Demo', totalAmount: 320.00, items: [{ product: { name: 'Premium Rice' }, quantity: 2 }], status: 'cancelled', paymentMethod: 'card', pickupLocation: 'Valu$ Tampines', pickupType: 'scheduled', pickupDate: '2026-03-25' },
+      { id: 'ORD-9985', shopName: 'Valu$ Tampines', customerName: 'Retailer Demo', totalAmount: 840.50, items: [{ product: { name: 'Snack Box' }, quantity: 5 }], status: 'ready', paymentMethod: 'bnpl', pickupLocation: 'Valu$ Tampines', pickupType: 'scheduled', pickupDate: '2026-03-27' },
+      { id: 'ORD-9986', shopName: 'Valu$ Jurong', customerName: 'Retailer Demo', totalAmount: 2150.00, items: [{ product: { name: 'Drinks Carton' }, quantity: 20 }], status: 'pending', paymentMethod: 'card', pickupLocation: 'Jurong East Hub', pickupType: 'immediate', pickupDate: '2026-03-28' }
+    ];
+    localStorage.setItem('lastOrder', JSON.stringify(demoOrders[2]));
+    localStorage.setItem('allOrders', JSON.stringify(demoOrders));
+    localStorage.setItem('orders', JSON.stringify(demoOrders)); // Used by Admin Portal
+
     if (email === 'demo@mamashop.com' && password === 'demo123') {
       // Seed Existing User State
       sessionStorage.setItem('accountType', 'prime');
@@ -29,20 +45,6 @@ export default function Login() {
       sessionStorage.setItem('address', '123 Bedok North Rd, #01-45, Singapore 460123');
       sessionStorage.setItem('uen', '201988888G');
 
-      const demoRecurring = [
-        { id: 'REC-001', name: 'Premium Cola (24x330ml)', qty: 5, frequency: 'Weekly', totalPrice: 112.50, nextDate: 'Apr 02, 2026' },
-        { id: 'REC-002', name: 'Instant Noodles (40 packs)', qty: 10, frequency: 'Monthly', totalPrice: 220.00, nextDate: 'Apr 15, 2026' }
-      ];
-      sessionStorage.setItem('recurringOrders', JSON.stringify(demoRecurring));
-
-      const demoOrders = [
-        { id: 'ORD-9982', createdAt: '2026-03-22T10:00:00Z', total: 1450.00, items: [{ product: { name: 'Bulk Soda' }, quantity: 10 }], status: 'Collected', paymentMethod: 'card', pickupLocation: 'Main Warehouse', pickupDate: '2026-03-24' },
-        { id: 'ORD-9983', createdAt: '2026-03-23T09:15:00Z', total: 320.00, items: [{ product: { name: 'Premium Rice' }, quantity: 2 }], status: 'Cancelled', paymentMethod: 'card', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-24' },
-        { id: 'ORD-9985', createdAt: '2026-03-25T14:30:00Z', total: 840.50, items: [{ product: { name: 'Snack Box' }, quantity: 5 }], status: 'Ready For Pickup', paymentMethod: 'bnpl', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-27' }
-      ];
-      localStorage.setItem('lastOrder', JSON.stringify(demoOrders[2]));
-      localStorage.setItem('allOrders', JSON.stringify(demoOrders));
-      
       window.dispatchEvent(new Event('accountTypeChanged'));
       navigate('/customer/shop');
     } else if (email === 'admin@valus.com' && password === 'admin123') {

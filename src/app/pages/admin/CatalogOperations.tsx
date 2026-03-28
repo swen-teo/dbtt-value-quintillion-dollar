@@ -1,4 +1,29 @@
+import { useState } from 'react';
+
 export default function CatalogOperations() {
+  const [isExporting, setIsExporting] = useState(false);
+  const [isOrdering, setIsOrdering] = useState(false);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      const csv = 'SKU,Demand,Stock\\nPremium Cola,+34%,8 days\\nInstant Noodles,+22%,13 days';
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'restock-list.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      setIsExporting(false);
+    }, 1500);
+  };
+
+  const handleOrder = () => {
+    setIsOrdering(true);
+    setTimeout(() => setIsOrdering(false), 2000);
+  };
+
   return (
     <div className="min-h-screen p-7">
       {/* Header */}
@@ -7,11 +32,17 @@ export default function CatalogOperations() {
           <p className="font-bold text-xs text-white">Catalog Operations</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm text-[#1f2937] hover:shadow-md transition-shadow">
-            Export restock list
+          <button 
+            onClick={handleExport}
+            disabled={isExporting}
+            className={`bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm hover:shadow-md transition-shadow ${isExporting ? 'text-gray-400 cursor-wait' : 'text-[#1f2937]'}`}>
+            {isExporting ? 'Exporting...' : 'Export restock list'}
           </button>
-          <button className="bg-[#ff6a00] rounded-[14px] px-5 py-3 font-extrabold text-sm text-white shadow-[0px_18px_42px_0px_rgba(201,101,15,0.12)] hover:shadow-xl transition-shadow">
-            Raise supplier order
+          <button 
+            onClick={handleOrder}
+            disabled={isOrdering}
+            className={`rounded-[14px] px-5 py-3 font-extrabold text-sm shadow-[0px_18px_42px_0px_rgba(201,101,15,0.12)] hover:shadow-xl transition-shadow ${isOrdering ? 'bg-green-500 text-white cursor-wait' : 'bg-[#ff6a00] text-white'}`}>
+            {isOrdering ? 'Order Raised ✅' : 'Raise supplier order'}
           </button>
         </div>
       </div>

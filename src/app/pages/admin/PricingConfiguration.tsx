@@ -1,4 +1,20 @@
+import { useState } from 'react';
+
 export default function PricingConfiguration() {
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleReview = () => {
+    setIsReviewing(true);
+    alert('Loading payment history panel... (Simulation)');
+    setTimeout(() => setIsReviewing(false), 1000);
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setTimeout(() => setIsSaving(false), 2000);
+  };
+
   return (
     <div className="min-h-screen p-7">
       {/* Header */}
@@ -7,11 +23,17 @@ export default function PricingConfiguration() {
           <p className="font-bold text-xs text-white">Subscription Controls</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm text-[#1f2937] hover:shadow-md transition-shadow">
+          <button 
+            onClick={handleReview}
+            disabled={isReviewing}
+            className={`bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm hover:shadow-md transition-shadow ${isReviewing ? 'text-gray-400 cursor-wait' : 'text-[#1f2937]'}`}>
             Review payment history
           </button>
-          <button className="bg-[#ff6a00] rounded-[14px] px-5 py-3 font-extrabold text-sm text-white shadow-[0px_18px_42px_0px_rgba(201,101,15,0.12)] hover:shadow-xl transition-shadow">
-            Save pricing rules
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className={`rounded-[14px] px-5 py-3 font-extrabold text-sm shadow-[0px_18px_42px_0px_rgba(201,101,15,0.12)] hover:shadow-xl transition-shadow ${isSaving ? 'bg-green-500 text-white cursor-wait' : 'bg-[#ff6a00] text-white'}`}>
+            {isSaving ? 'Rules Saved ✅' : 'Save pricing rules'}
           </button>
         </div>
       </div>
