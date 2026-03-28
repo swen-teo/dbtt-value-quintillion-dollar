@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Package, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
 import { products } from '../../data/mockData';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -32,25 +33,57 @@ export default function OrderManagement() {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
     try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          id: order.id,
+          customerName: order.customer_name,
+          shopName: order.shop_name,
+          pickupType: order.pickup_type,
+          pickupLocation: order.pickup_location,
+          totalAmount: order.total_amount,
+          status: order.status,
+          pickupDate: order.pickup_date,
+          createdAt: order.created_at
+        }));
+        setOrders(mappedOrders);
+      }
+    } catch (error: any) {
+      console.error('Error loading orders from Supabase:', error);
+      alert('Unable to load orders from Supabase. Falling back to local data. Error: ' + error.message);
       const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       setOrders(savedOrders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      setOrders([]);
     }
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        alert('Supabase update failed: ' + error.message);
+        throw error;
+      }
+
       const updatedOrders = orders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    } catch (error) {
-      console.error('Error updating order status:', error);
+    } catch (error: any) {
+      console.error('Error updating order status in Supabase:', error);
+      alert('Error updating order status: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -189,41 +222,39 @@ export default function OrderManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-3">
                         {order.status === 'pending' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'confirmed')}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Confirm Order"
+                            className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Confirm
                           </button>
                         )}
                         {order.status === 'confirmed' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'ready')}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Mark as Ready"
+                            className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Mark as Ready
                           </button>
                         )}
                         {order.status === 'ready' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'completed')}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            title="Mark as Completed"
+                            className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Complete
                           </button>
                         )}
-                        <button
-                          onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Cancel Order"
-                        >
-                          <XCircle className="w-5 h-5" />
-                        </button>
+                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

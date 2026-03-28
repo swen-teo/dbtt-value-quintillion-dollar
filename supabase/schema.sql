@@ -44,6 +44,8 @@ CREATE TABLE public.customers (
   email text NOT NULL,
   password text NOT NULL, -- Added to support login (Note: Plain text for simplicity per user flow)
   phone text NOT NULL,
+  grab_email text,
+  grab_phone text,
   credit_limit numeric(10, 2) NOT NULL DEFAULT 0,
   used_credit numeric(10, 2) NOT NULL DEFAULT 0,
   membership_tier text NOT NULL DEFAULT 'standard'
@@ -98,6 +100,7 @@ CREATE POLICY "Enable read access for all users" ON public.outlet_locations FOR 
 -- Allow anonymous inserts for orders since there's no auth setup yet
 CREATE POLICY "Enable insert for anonymous users" ON public.orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable select for anonymous users" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Enable update for anonymous users" ON public.orders FOR UPDATE USING (true);
 
 CREATE POLICY "Enable insert for anonymous users" ON public.order_items FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable select for anonymous users" ON public.order_items FOR SELECT USING (true);

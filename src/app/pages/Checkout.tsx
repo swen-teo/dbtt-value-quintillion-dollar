@@ -142,9 +142,14 @@ export default function Checkout() {
     try {
       const spUrl = (import.meta as any).env.VITE_SUPABASE_URL;
       if (spUrl && spUrl !== 'YOUR_SUPABASE_PROJECT_URL' && !spUrl.includes('placeholder')) {
+        const customerId = sessionStorage.getItem('customerId');
+        const customerName = sessionStorage.getItem('contactPerson') || 'Guest';
+        const shopName = sessionStorage.getItem('shopName') || 'Guest Shop';
+
         const { data: orderDataRaw, error: orderError } = await supabase.from('orders').insert({
-          customer_name: cardDetails.name || 'Guest',
-          shop_name: 'Guest Shop',
+          customer_id: customerId,
+          customer_name: customerName,
+          shop_name: shopName,
           total_amount: total,
           payment_method: paymentMethod,
           bnpl_installments: paymentMethod === 'bnpl' ? 4 : null,

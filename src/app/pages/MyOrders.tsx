@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Package, MapPin, X, ArrowRight, CreditCard, Shield } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Package, MapPin, X, ArrowRight, CreditCard, Shield, RefreshCcw } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export default function MyOrders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -7,21 +8,49 @@ export default function MyOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   useEffect(() => {
-    const allOrdersStr = localStorage.getItem('allOrders');
-    const lastOrderStr = localStorage.getItem('lastOrder');
-    
-    if (allOrdersStr) {
-      const all = JSON.parse(allOrdersStr);
-      // Sort by date descending
-      const sorted = [...all].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setOrders(sorted);
-      setLastOrder(sorted[0]);
-    } else if (lastOrderStr) {
-      const saved = JSON.parse(lastOrderStr);
-      setLastOrder(saved);
-      setOrders([saved]);
-    }
+    loadOrders();
   }, []);
+
+  const loadOrders = async () => {
+    const customerId = sessionStorage.getItem('customerId');
+    if (!customerId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*, products(*))')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          createdAt: order.created_at,
+          total: order.total_amount,
+          items: order.order_items.map((item: any) => ({
+            ...item,
+            product: item.products,
+            quantity: item.quantity
+          }))
+        }));
+        setOrders(mappedOrders);
+        setLastOrder(mappedOrders[0]);
+      }
+    } catch (err: any) {
+      console.error("Error loading orders from Supabase:", err);
+      alert("Unable to load orders from Supabase. Falling back to local data. Error: " + err.message);
+      // Fallback to localStorage if needed
+      const allOrdersStr = localStorage.getItem('allOrders');
+      if (allOrdersStr) {
+        const all = JSON.parse(allOrdersStr);
+        const sorted = [...all].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setOrders(sorted);
+        setLastOrder(sorted[0]);
+      }
+    }
+  };
 
   const markAsCollected = (orderId: string) => {
     const freshOrders = JSON.parse(localStorage.getItem('allOrders') || '[]');
@@ -70,6 +99,14 @@ export default function MyOrders() {
             <h1 className="font-bold text-3xl text-[#101828]">My Orders</h1>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">
+            <button 
+              onClick={loadOrders}
+              className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all font-bold text-[#101828] shadow-sm active:scale-95"
+            >
+              <RefreshCcw className="w-4 h-4 text-[#ff6900]" />
+              Refresh Status
+            </button>
+            <div className="h-4 w-px bg-gray-300 mx-1" />
             <Calendar className="w-4 h-4" />
             <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </div>

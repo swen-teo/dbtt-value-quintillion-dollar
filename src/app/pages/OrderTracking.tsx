@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Package, MapPin, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, MapPin, Calendar, CheckCircle, Clock, XCircle, RefreshCcw } from 'lucide-react';
 import { useProducts } from '../hooks/useData';
+import { supabase } from '../lib/supabaseClient';
 
 export default function OrderTracking() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -10,13 +11,59 @@ export default function OrderTracking() {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
+    const customerId = sessionStorage.getItem('customerId');
+    if (!customerId) return;
+
     try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          id: order.id,
+          createdAt: order.created_at,
+          totalAmount: order.total_amount,
+          status: order.status,
+          pickupLocation: order.pickup_location,
+          pickupType: order.pickup_type,
+          pickupDate: order.pickup_date,
+          // Since OrderTracking seems to expect items as part of the order object in the render 
+          // but doesn't fetch them here originally, I'll fetch them for completeness if needed 
+          // or at least handle the mapping if it was stored in items before.
+          // The current render uses order.items, which is not in the orders table directly.
+          items: [] // Placeholder, adding proper fetch below
+        }));
+
+        // Fetch items for these orders
+        const orderIds = mappedOrders.map(o => o.id);
+        const { data: itemsData } = await supabase
+          .from('order_items')
+          .select('*')
+          .in('order_id', orderIds);
+
+        if (itemsData) {
+          mappedOrders.forEach(order => {
+            order.items = itemsData.filter(item => item.order_id === order.id).map(item => ({
+              product: { id: item.product_id },
+              quantity: item.quantity
+            }));
+          });
+        }
+
+        setOrders(mappedOrders);
+      }
+    } catch (error: any) {
+      console.error('Error loading orders from Supabase:', error);
+      alert('Unable to load orders from Supabase. Falling back to local data. Error: ' + error.message);
       const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       setOrders(savedOrders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      setOrders([]);
     }
   };
 
@@ -71,7 +118,16 @@ export default function OrderTracking() {
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-[1200px] mx-auto p-8">
-        <h1 className="font-bold text-3xl text-[#101828] mb-8">Order Tracking</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-bold text-3xl text-[#101828]">Order Tracking</h1>
+          <button 
+            onClick={loadOrders}
+            className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all font-bold text-[#101828] shadow-sm active:scale-95"
+          >
+            <RefreshCcw className="w-4 h-4 text-[#ff6900]" />
+            Refresh Status
+          </button>
+        </div>
 
         <div className="space-y-6">
           {orders.map((order) => (

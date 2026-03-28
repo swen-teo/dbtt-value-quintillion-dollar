@@ -411,11 +411,30 @@ export default function Account() {
                                     </div>
                                     
                                     <button 
-                                      onClick={() => {
+                                      onClick={async () => {
                                         if (grabPhone.length < 5 || !grabEmail.includes('@')) {
                                           return alert('Please enter a valid phone and email address');
                                         }
                                         setIsVerifying(true);
+                                        
+                                        const customerId = sessionStorage.getItem('customerId');
+                                        if (customerId) {
+                                          try {
+                                            const { supabase } = await import('../lib/supabaseClient');
+                                            const { error } = await supabase
+                                              .from('customers')
+                                              .update({ 
+                                                grab_email: grabEmail,
+                                                grab_phone: grabPhone
+                                              })
+                                              .eq('id', customerId);
+                                            
+                                            if (error) throw error;
+                                          } catch (err) {
+                                            console.error("Failed to save Grab credentials to Supabase:", err);
+                                          }
+                                        }
+
                                         setTimeout(() => {
                                           setIsVerifying(false);
                                           setIsGrabLinked(true);

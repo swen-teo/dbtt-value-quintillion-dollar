@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 import imgImageValu from 'figma:asset/dd263ea74eea751edbe19c75046ad4c686cd593c.png';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,41 +31,53 @@ export default function Login() {
     localStorage.setItem('allOrders', JSON.stringify(demoOrders));
     localStorage.setItem('orders', JSON.stringify(demoOrders)); // Used by Admin Portal
 
-    if (email === 'demo@mamashop.com' && password === 'demo123') {
-      // Seed Existing User State
-      sessionStorage.setItem('accountType', 'prime');
-      sessionStorage.setItem('grabLinked', 'true');
-      sessionStorage.setItem('grabEmail', 'demo@mamashop.com');
-      sessionStorage.setItem('recurringCardLinked', 'true');
+    // 1. Check if user is an Admin
+    const { data: adminData } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .single();
+
+    if (adminData) {
+      sessionStorage.setItem('adminId', adminData.id);
+      sessionStorage.setItem('adminName', adminData.name);
+      sessionStorage.setItem('adminRole', adminData.role);
+      navigate('/admin/dashboard');
+      return;
+    }
+
+    // 2. Check if user is a Customer
+    const { data: customerData, error: customerError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .single();
+
+    if (customerData) {
+      // Seed User State from Database
+      sessionStorage.setItem('customerId', customerData.id);
+      sessionStorage.setItem('accountType', customerData.membership_tier);
+      sessionStorage.setItem('shopName', customerData.shop_name);
+      sessionStorage.setItem('contactPerson', customerData.contact_person);
+      sessionStorage.setItem('email', customerData.email);
+      sessionStorage.setItem('phone', customerData.phone);
+      sessionStorage.setItem('address', customerData.address || '');
+      sessionStorage.setItem('uen', customerData.uen || '');
+      sessionStorage.setItem('creditLimit', customerData.credit_limit.toString());
+      sessionStorage.setItem('usedCredit', customerData.used_credit.toString());
       
-      // Business Profile
-      sessionStorage.setItem('shopName', 'Mama Shop Wholesale');
-      sessionStorage.setItem('contactPerson', 'Retailer Demo');
-      sessionStorage.setItem('email', 'demo@mamashop.com');
-      sessionStorage.setItem('phone', '+65 8888 7777');
-      sessionStorage.setItem('address', '123 Bedok North Rd, #01-45, Singapore 460123');
-      sessionStorage.setItem('uen', '201988888G');
-
-      const demoRecurring = [
-        { id: 'REC-001', name: 'Premium Cola (24x330ml)', qty: 5, frequency: 'Weekly', totalPrice: 112.50, nextDate: 'Apr 02, 2026' },
-        { id: 'REC-002', name: 'Instant Noodles (40 packs)', qty: 10, frequency: 'Monthly', totalPrice: 220.00, nextDate: 'Apr 15, 2026' }
-      ];
-      sessionStorage.setItem('recurringOrders', JSON.stringify(demoRecurring));
-
-      const demoOrders = [
-        { id: 'ORD-9982', createdAt: '2026-03-22T10:00:00Z', total: 1450.00, items: [{ product: { name: 'Bulk Soda' }, quantity: 10 }], status: 'Collected', paymentMethod: 'card', pickupLocation: 'Main Warehouse', pickupDate: '2026-03-24' },
-        { id: 'ORD-9983', createdAt: '2026-03-23T09:15:00Z', total: 320.00, items: [{ product: { name: 'Premium Rice' }, quantity: 2 }], status: 'Cancelled', paymentMethod: 'card', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-24' },
-        { id: 'ORD-9985', createdAt: '2026-03-25T14:30:00Z', total: 840.50, items: [{ product: { name: 'Snack Box' }, quantity: 5 }], status: 'Ready For Pickup', paymentMethod: 'bnpl', pickupLocation: 'Valu$ Tampines', pickupDate: '2026-03-27' }
-      ];
-      localStorage.setItem('lastOrder', JSON.stringify(demoOrders[2]));
-      localStorage.setItem('allOrders', JSON.stringify(demoOrders));
+      // Grab linking state
+      if (customerData.grab_email) {
+        sessionStorage.setItem('grabLinked', 'true');
+        sessionStorage.setItem('grabEmail', customerData.grab_email);
+      }
       
       window.dispatchEvent(new Event('accountTypeChanged'));
       navigate('/customer/shop');
-    } else if (email === 'admin@valus.com' && password === 'admin123') {
-      navigate('/admin/dashboard');
     } else {
-      alert('Invalid credentials. Access is currently limited to Demo Accounts.');
+      alert('Invalid credentials. Please check your email and password.');
     }
   };
 
