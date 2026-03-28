@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useProducts } from '../../hooks/useData';
-import { Search, Edit2, X, Tag, TrendingDown, Lock } from 'lucide-react';
+import { Search, Edit2, X, Tag, TrendingDown, Lock, ChevronRight, Trash2 } from 'lucide-react';
 import { Product } from '../../types';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function PricingConfiguration() {
   const { products, loading } = useProducts();
@@ -13,6 +14,7 @@ export default function PricingConfiguration() {
   
   // Track promo percentage per product ID
   const [draftPromos, setDraftPromos] = useState<Record<string, number>>({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [promoInput, setPromoInput] = useState<string>('');
 
   const handleReview = () => {
@@ -21,9 +23,53 @@ export default function PricingConfiguration() {
     setTimeout(() => setIsReviewing(false), 1000);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (Object.keys(draftPromos).length === 0) {
+      alert('No changes to save!');
+      return;
+    }
+
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 2000);
+    
+    try {
+      // Loop through all draft promos and update Supabase
+      const updatePromises = Object.entries(draftPromos).map(async ([productId, promoPercent]) => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          const newCash = product.cashPrice * (1 - promoPercent / 100);
+          const newBnpl = product.bnplPrice * (1 - promoPercent / 100);
+
+          return supabase
+            .from('products')
+            .update({
+              cash_price: newCash,
+              bnpl_price: newBnpl
+            })
+            .eq('id', product.dbId || productId); // fallback to id if dbId not found
+        }
+      });
+
+      await Promise.all(updatePromises);
+      
+      // Ideally re-fetch or update local state
+      alert('Success! All pricing rules deployed successfully.');
+      setDraftPromos({});
+      setIsReviewModalOpen(false);
+    } catch (error) {
+      console.error('Error saving pricing changes:', error);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const removePromoFromDraft = (productId: string) => {
+    const newPromos = { ...draftPromos };
+    delete newPromos[productId];
+    setDraftPromos(newPromos);
+    if (Object.keys(newPromos).length === 0) {
+      setIsReviewModalOpen(false);
+    }
   };
 
   const filteredProducts = useMemo(() => {
@@ -64,10 +110,15 @@ export default function PricingConfiguration() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={handleReview}
-            disabled={isReviewing}
-            className={`bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm hover:shadow-md transition-shadow ${isReviewing ? 'text-gray-400 cursor-wait' : 'text-[#1f2937]'}`}>
-            Review payment history
+            onClick={() => setIsReviewModalOpen(true)}
+            disabled={Object.keys(draftPromos).length === 0}
+            className={`bg-white border border-[#eadfce] rounded-[14px] px-5 py-3 font-extrabold text-sm hover:shadow-md transition-all flex items-center gap-2 ${Object.keys(draftPromos).length === 0 ? 'opacity-40 cursor-not-allowed' : 'text-[#1f2937]'}`}>
+            Review adjustments
+            {Object.keys(draftPromos).length > 0 && (
+              <span className="bg-[#ff6a00] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                {Object.keys(draftPromos).length}
+              </span>
+            )}
           </button>
           <button 
             onClick={handleSave}
@@ -374,6 +425,97 @@ export default function PricingConfiguration() {
           </div>
         </div>
       )}
+      {/* Review Adjustments Modal */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden transform animate-in slide-in-from-bottom-4 duration-300">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="font-black text-2xl text-gray-900">Review Pending Changes</h2>
+                <p className="text-gray-500 text-sm mt-1">Review your SKU adjustments before deploying to the live catalog.</p>
+              </div>
+              <button 
+                onClick={() => setIsReviewModalOpen(false)} 
+                className="p-3 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                disabled={isSaving}
+              >
+                <X className="w-5 h-5 text-gray-900" />
+              </button>
+            </div>
+
+            <div className="p-8 max-h-[50vh] overflow-auto">
+              {Object.keys(draftPromos).length === 0 ? (
+                <div className="py-10 text-center text-gray-400 font-bold uppercase tracking-widest">
+                  No pending adjustments
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(draftPromos).map(([id, percent]) => {
+                    const product = products.find(p => p.id === id);
+                    if (!product) return null;
+                    const newCash = product.cashPrice * (1 - percent / 100);
+                    return (
+                      <div key={id} className="flex items-center gap-6 p-4 rounded-2xl bg-gray-50 border border-gray-100 group">
+                        <div className="w-14 h-14 bg-white rounded-xl border border-gray-200 flex items-center justify-center p-2">
+                          <img src={product.image} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 truncate">{product.name}</p>
+                          <p className="text-xs text-emerald-600 font-bold tracking-tight bg-emerald-50 w-fit px-2 py-0.5 rounded-full border border-emerald-100 mt-1">
+                            -{percent}% Promo Applied
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400 line-through font-bold">${product.cashPrice.toFixed(2)}</p>
+                          <p className="text-lg font-black text-[#ff6a00] leading-none">${newCash.toFixed(2)}</p>
+                        </div>
+                        <button 
+                          onClick={() => removePromoFromDraft(id)}
+                          className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          disabled={isSaving}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="p-8 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3 text-amber-600">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest leading-none">Status</p>
+                  <p className="text-sm font-bold">Unsaved changes only</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setIsReviewModalOpen(false)}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-white border border-gray-200 text-gray-900 rounded-[18px] font-black text-sm hover:shadow-md transition-all active:scale-95"
+                >
+                  Keep Editing
+                </button>
+                <button 
+                  onClick={handleSave}
+                  disabled={isSaving || Object.keys(draftPromos).length === 0}
+                  className={`px-10 py-4 rounded-[18px] font-black text-sm text-white shadow-xl transition-all active:scale-95 flex items-center gap-2 ${isSaving ? 'bg-green-500 cursor-wait' : 'bg-[#ff6a00]'}`}
+                >
+                  {isSaving ? 'Deploying Changes...' : 'Deploy to Catalog'}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
