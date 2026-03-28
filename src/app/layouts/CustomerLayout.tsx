@@ -122,17 +122,6 @@ export default function CustomerLayout() {
               </div>
               <p className={`absolute left-10 top-2 font-medium text-[14px] tracking-[-0.15px] ${getTextClass('my-orders')}`}>My Orders</p>
             </div>
-
-            {/* Payments */}
-            <div className={getLinkClass('payments')} onClick={() => navigate('/customer/payments')}>
-              <div className="absolute left-2 top-2 w-5 h-5">
-                <svg className="w-full h-full" fill="none" viewBox="0 0 20 20">
-                  <rect x="2.5" y="4.17" width="15" height="11.67" rx="1.67" stroke={getStrokeVar('payments')} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-                  <path d="M2.5 8.33H17.5" stroke={getStrokeVar('payments')} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-                </svg>
-              </div>
-              <p className={`absolute left-10 top-2 font-medium text-[14px] tracking-[-0.15px] ${getTextClass('payments')}`}>Payments</p>
-            </div>
           </div>
         </div>
 

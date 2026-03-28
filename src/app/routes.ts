@@ -12,10 +12,8 @@ import QuickOrder from "./pages/QuickOrder";
 import Account from "./pages/Account";
 import MyOrders from "./pages/MyOrders";
 import OrderTracking from "./pages/OrderTracking";
-import PaymentSchedule from "./pages/PaymentSchedule";
 import Deals from "./pages/Deals";
 import AutoPay from "./pages/AutoPay";
-import PaymentPage from "./pages/PaymentPage";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import AdminLogin from "./pages/admin/AdminLogin";
 import Dashboard from "./pages/admin/Dashboard";
@@ -54,8 +52,6 @@ export const router = createBrowserRouter([
       { path: "account", Component: Account },
       { path: "my-orders", Component: MyOrders },
       { path: "orders", Component: OrderTracking },
-      { path: "payments", Component: PaymentSchedule },
-      { path: "payment/:id", Component: PaymentPage },
       { path: "auto-pay", Component: AutoPay },
       { path: "deals", Component: Deals },
     ],
