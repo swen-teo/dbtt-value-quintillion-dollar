@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Package, MapPin, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 
 export default function OrderTracking() {
   const [orders, setOrders] = useState<any[]>([]);
+  const { products } = useProducts();
 
   useEffect(() => {
     loadOrders();

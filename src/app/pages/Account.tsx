@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { User, CreditCard, MapPin, Package, Shield, Star, Award, CheckCircle, XCircle, RefreshCcw, Clock, Box, Smartphone, Link as LinkIcon, Plus, Minus, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 
 type TabType = 'profile' | 'subscription' | 'credit' | 'recurring';
 
 export default function Account() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const navigate = useNavigate();
+  const { products } = useProducts();
 
   const [pendingCreditLimit, setPendingCreditLimit] = useState(5000);
   const initialCreditLimit = parseInt(sessionStorage.getItem('creditLimit') || '0', 10);
@@ -23,7 +24,7 @@ export default function Account() {
     creditLimit: initialCreditLimit,
     usedCredit: initialUsedCredit,
     availableCredit: Math.max(0, initialCreditLimit - initialUsedCredit),
-    membershipTier: sessionStorage.getItem('accountType') || 'normal',
+    membershipTier: sessionStorage.getItem('accountType') || 'standard',
     memberSince: 'Jan 2024',
     rewardsPoints: 12400,
     nextBillingDate: 'April 20, 2026',
@@ -59,7 +60,7 @@ export default function Account() {
         creditLimit: currentCreditLimit,
         usedCredit: currentUsedCredit,
         availableCredit: Math.max(0, currentCreditLimit - currentUsedCredit),
-        membershipTier: sessionStorage.getItem('accountType') || 'normal'
+        membershipTier: sessionStorage.getItem('accountType') || 'standard'
       }));
     };
 
@@ -200,7 +201,7 @@ export default function Account() {
                     <h2 className="text-2xl font-bold text-[#0a0a0a]">Subscription Plan</h2>
                   </div>
 
-                  {customer.membershipTier === 'normal' ? (
+                  {customer.membershipTier === 'standard' ? (
                     <>
                       <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-4">
@@ -239,13 +240,26 @@ export default function Account() {
 
                           <div className="text-right mt-4">
                             <button 
-                              onClick={() => {
-                                setCustomer({ ...customer, membershipTier: 'prime' });
-                                sessionStorage.setItem('accountType', 'prime');
+                              onClick={async () => {
+                                const newTier = 'prime';
+                                setCustomer({ ...customer, membershipTier: newTier });
+                                sessionStorage.setItem('accountType', newTier);
                                 // Reset Grab Link on fresh upgrade
                                 sessionStorage.removeItem('grabLinked');
                                 sessionStorage.removeItem('grabEmail');
                                 setIsGrabLinked(false);
+                                
+                                // Update DB
+                                const customerId = sessionStorage.getItem('customerId');
+                                if (customerId) {
+                                  try {
+                                    const { supabase } = await import('../lib/supabaseClient');
+                                    await supabase.from('customers').update({ membership_tier: newTier }).eq('id', customerId);
+                                  } catch (err) {
+                                    console.error("Failed to update membership tier:", err);
+                                  }
+                                }
+
                                 window.dispatchEvent(new Event('accountTypeChanged'));
                               }}
                               className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all"
@@ -268,13 +282,26 @@ export default function Account() {
                         </div>
 
                         <button 
-                          onClick={() => {
-                            setCustomer({ ...customer, membershipTier: 'normal' });
-                            sessionStorage.setItem('accountType', 'normal');
+                          onClick={async () => {
+                            const newTier = 'standard';
+                            setCustomer({ ...customer, membershipTier: newTier });
+                            sessionStorage.setItem('accountType', newTier);
                             // Disconnect Grab on Cancellation
                             sessionStorage.removeItem('grabLinked');
                             sessionStorage.removeItem('grabEmail');
                             setIsGrabLinked(false);
+                            
+                            // Update DB
+                            const customerId = sessionStorage.getItem('customerId');
+                            if (customerId) {
+                              try {
+                                const { supabase } = await import('../lib/supabaseClient');
+                                await supabase.from('customers').update({ membership_tier: newTier }).eq('id', customerId);
+                              } catch (err) {
+                                console.error("Failed to update membership tier:", err);
+                              }
+                            }
+
                             window.dispatchEvent(new Event('accountTypeChanged'));
                           }}
                           className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-xl transition-all"
@@ -426,7 +453,7 @@ export default function Account() {
                     <h2 className="text-2xl font-bold text-[#0a0a0a]">Grab PayLater Overview</h2>
                   </div>
 
-                  {customer.membershipTier === 'normal' ? (
+                  {customer.membershipTier === 'standard' ? (
                     <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-8 text-center mt-8">
                       <Smartphone className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-xl font-bold text-gray-900 mb-2">Unlock Buy Now, Pay Later</h3>
@@ -509,7 +536,7 @@ export default function Account() {
                     </span>
                   </div>
 
-                  {customer.membershipTier === 'normal' ? (
+                  {customer.membershipTier === 'standard' ? (
                     <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-12 text-center mt-8">
                       <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <RefreshCcw className="w-10 h-10 text-[#ff6900]" />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Package, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
+import { Search, Filter, Package, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { products } from '../../data/mockData';
 
 export default function OrderManagement() {
