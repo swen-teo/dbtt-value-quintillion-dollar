@@ -53,11 +53,18 @@ This project leverages the latest frontend technologies for a responsive, high-p
     # or
     pnpm install
     ```
-3.  **Start development server:**
+3.  **Configure Supabase for forecasting data:**
+    ```bash
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-anon-key
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+    ```
+4.  **Start development server:**
     ```bash
     npm run dev
     ```
-4.  **Build for production:**
+5.  **Build for production:**
     ```bash
     npm run build
     ```
@@ -116,6 +123,21 @@ DB_PASS=your_password_here
 ```
 
 instead of editing the `.py` files individually.
+
+### Forecasting Data
+The forecasting dashboard now reads from Supabase instead of the local MySQL service. If you are adding forecasting support to an existing Supabase database, use [supabase/forecasting.sql](/Users/tayelroy/Coding/dbtt-value-quintillion-dollar/supabase/forecasting.sql). If you are building the entire app schema from scratch, use [supabase/schema.sql](/Users/tayelroy/Coding/dbtt-value-quintillion-dollar/supabase/schema.sql) first.
+
+After the forecasting tables exist, seed the forecast history with:
+
+```bash
+npm run forecast:seed
+```
+
+If you want the local Python worker to process forecast jobs while you develop, run:
+
+```bash
+npm run legacy:start
+```
 
 ---
 
@@ -222,4 +244,3 @@ Proprietary License - © 2026 Valu$ Wholesale. All rights reserved.
 ---
 
 Built with ❤️ for Singapore's Retail Ecosystem.
-
