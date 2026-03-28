@@ -20,12 +20,68 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
+type ProductOption = {
+  id: string;
+  mock_id: string;
+  name: string;
+  category: string;
+  stock: number;
+};
+
+type HubRequestRow = {
+  id: string;
+  shop_name: string;
+  hub: string;
+  zone: string;
+  item: string;
+  quantity: number;
+  priority: string;
+  status: string;
+  created_at: string;
+};
+
+type QueueRequest = {
+  id: string;
+  shop: string;
+  zone: string;
+  priority: string;
+  units: number;
+  time: string;
+  status?: string;
+};
+
+type RecentRequest = {
+  id: string;
+  item: string;
+  qty: number;
+  status: string;
+  date: string;
+};
+
+const DEFAULT_QUEUE_REQUESTS: QueueRequest[] = [
+  { id: 'REQ-101', shop: 'Mama Shop #493', zone: 'East', priority: 'high', units: 450, time: '2h ago', status: 'pending' },
+  { id: 'REQ-102', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, time: '4h ago', status: 'pending' },
+  { id: 'REQ-103', shop: 'AMK Central', zone: 'North', priority: 'high', units: 580, time: '5h ago', status: 'pending' },
+  { id: 'REQ-104', shop: 'Tampines Hub', zone: 'East', priority: 'low', units: 120, time: '6h ago', status: 'pending' },
+];
+
+const DEFAULT_RECENT_REQUESTS: RecentRequest[] = [
+  { id: 'ORD-921', item: 'Thai Fragrant Rice 5kg', qty: 240, status: 'In Transit', date: 'Today' },
+  { id: 'ORD-920', item: 'Cooking Oil Premium 2L', qty: 150, status: 'Confirmed', date: 'Yesterday' },
+];
+
 export default function LogisticsHubCollections() {
   const [userRole, setUserRole] = useState<'normalShop' | 'hubShop'>('normalShop');
   const [activeTab, setActiveTab] = useState<'request' | 'hub'>('request');
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
   const [isDownloading, setIsDownloading] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
+  const [queueRequests, setQueueRequests] = useState<QueueRequest[]>(DEFAULT_QUEUE_REQUESTS);
+  const [recentRequests, setRecentRequests] = useState<RecentRequest[]>(DEFAULT_RECENT_REQUESTS);
+  const [productOptions, setProductOptions] = useState<ProductOption[]>([]);
+  const [isSkuFocused, setIsSkuFocused] = useState(false);
+  const currentShopName = sessionStorage.getItem('shopName') || 'Current Shop';
 
   // New Request Form State
   const [requestForm, setRequestForm] = useState({
@@ -56,28 +112,216 @@ export default function LogisticsHubCollections() {
     checkProfile();
   }, []);
 
-  // Mock Shop Restock Data (For Hub Portal management)
-  const incomingRequests = [
-    { id: 'REQ-101', shop: 'Mama Shop #493', zone: 'East', priority: 'high', units: 450, time: '2h ago' },
-    { id: 'REQ-102', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, time: '4h ago' },
-    { id: 'REQ-103', shop: 'AMK Central', zone: 'North', priority: 'high', units: 580, time: '5h ago' },
-    { id: 'REQ-104', shop: 'Tampines Hub', zone: 'East', priority: 'low', units: 120, time: '6h ago' },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProducts() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id,mock_id,name,category,stock')
+        .order('name', { ascending: true });
+
+      if (cancelled || error || !data) {
+        return;
+      }
+
+      setProductOptions(
+        data.map((row) => ({
+          id: row.id,
+          mock_id: row.mock_id,
+          name: row.name,
+          category: row.category,
+          stock: Number(row.stock || 0),
+        })),
+      );
+    }
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRequests() {
+      const { data, error } = await supabase
+        .from('hub_requests')
+        .select('id,shop_name,hub,zone,item,quantity,priority,status,created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (cancelled || error || !data) {
+        return;
+      }
+
+      const rows = data as HubRequestRow[];
+      const queue = rows
+        .filter((row) => row.status === 'pending' || row.status === 'submitted')
+        .map(mapRowToQueueRequest);
+      const recent = rows
+        .filter((row) => row.shop_name === currentShopName)
+        .map(mapRowToRecentRequest);
+
+      setQueueRequests(queue.length > 0 ? queue : DEFAULT_QUEUE_REQUESTS);
+      setRecentRequests(recent.length > 0 ? recent : DEFAULT_RECENT_REQUESTS);
+    }
+
+    loadRequests();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentShopName]);
+
+  const pendingQueueRequests = queueRequests.filter(
+    (request) => !request.status || request.status === 'pending' || request.status === 'submitted',
+  );
 
   const filteredRequests = selectedZone 
-    ? incomingRequests.filter(s => s.zone === selectedZone)
-    : incomingRequests;
+    ? pendingQueueRequests.filter((s) => s.zone === selectedZone)
+    : pendingQueueRequests;
 
-  const handleAction = (id: string) => {
+  const handleAction = async (id: string) => {
     setProcessingStatus(prev => ({ ...prev, [id]: 'loading' }));
-    setTimeout(() => {
-      setProcessingStatus(prev => ({ ...prev, [id]: 'done' }));
-    }, 1500);
+
+    try {
+      const { error } = await supabase
+        .from('hub_requests')
+        .update({ status: 'approved' })
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      setQueueRequests((prev) =>
+        prev.map((request) =>
+          request.id === id ? { ...request, status: 'approved' } : request,
+        ),
+      );
+
+      setTimeout(() => {
+        setProcessingStatus((prev) => ({ ...prev, [id]: 'done' }));
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to approve hub request:', error);
+      setProcessingStatus((prev) => ({ ...prev, [id]: 'error' }));
+    }
   };
 
   const handleBatchApprove = () => {
     const toApprove = filteredRequests.filter(s => !processingStatus[s.id]);
     toApprove.forEach(s => handleAction(s.id));
+  };
+
+  const formatRequestTime = (iso: string) => {
+    const createdAt = new Date(iso);
+    const diffMs = Date.now() - createdAt.getTime();
+    const diffMins = Math.max(0, Math.round(diffMs / 60000));
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.round(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.round(diffHours / 24)}d ago`;
+  };
+
+  const mapRowToQueueRequest = (row: HubRequestRow): QueueRequest => ({
+    id: row.id,
+    shop: row.shop_name,
+    zone: row.zone,
+    priority: row.priority,
+    units: row.quantity,
+    time: formatRequestTime(row.created_at),
+    status: row.status,
+  });
+
+  const mapRowToRecentRequest = (row: HubRequestRow): RecentRequest => ({
+    id: row.id.slice(0, 8).toUpperCase(),
+    item: row.item,
+    qty: row.quantity,
+    status: row.status === 'pending' ? 'Submitted' : row.status,
+    date: formatRequestTime(row.created_at),
+  });
+
+  const hubZoneFromName = (hubName: string) => {
+    if (hubName.toLowerCase().includes('bedok')) return 'East';
+    if (hubName.toLowerCase().includes('jurong')) return 'West';
+    if (hubName.toLowerCase().includes('woodlands')) return 'North';
+    return 'Central';
+  };
+
+  const skuQuery = requestForm.item.trim().toLowerCase();
+  const skuSuggestions = skuQuery
+    ? productOptions.filter((product) => {
+        const haystack = `${product.mock_id} ${product.name} ${product.category}`.toLowerCase();
+        return haystack.includes(skuQuery);
+      }).slice(0, 6)
+    : [];
+
+  const handleSelectSku = (product: ProductOption) => {
+    setRequestForm((prev) => ({
+      ...prev,
+      item: `${product.mock_id} · ${product.name}`,
+    }));
+    setSubmissionStatus(null);
+    setIsSkuFocused(false);
+  };
+
+  const handleSubmitRequest = async () => {
+    const item = requestForm.item.trim();
+    const quantity = Number(requestForm.quantity);
+
+    if (!item || !quantity || quantity <= 0) {
+      setSubmissionStatus('Please enter an item and a valid quantity before submitting.');
+      return;
+    }
+
+    const zone = hubZoneFromName(requestForm.hub);
+    const priority = quantity >= 300 ? 'high' : 'medium';
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload = {
+        shop_name: currentShopName,
+        hub: requestForm.hub,
+        zone,
+        item,
+        quantity,
+        priority,
+        status: 'pending',
+        requested_by: user?.id || null,
+      };
+
+      const { data, error } = await supabase
+        .from('hub_requests')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const savedRow = data as HubRequestRow;
+      const queueItem = mapRowToQueueRequest(savedRow);
+      const recentItem = mapRowToRecentRequest(savedRow);
+
+      setQueueRequests((prev) => [queueItem, ...prev]);
+      setRecentRequests((prev) => [recentItem, ...prev]);
+      setRequestForm({
+        hub: requestForm.hub,
+        item: '',
+        quantity: '',
+      });
+      setSubmissionStatus(`Request sent to ${requestForm.hub} and saved to Supabase.`);
+    } catch (error) {
+      console.error('Failed to submit hub request:', error);
+      setSubmissionStatus('Failed to save the request to Supabase. Please try again.');
+    }
   };
 
   const handleDownloadManifest = () => {
@@ -202,8 +446,33 @@ export default function LogisticsHubCollections() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input 
                       placeholder="Product name or code..."
+                      value={requestForm.item}
+                      onFocus={() => setIsSkuFocused(true)}
+                      onBlur={() => window.setTimeout(() => setIsSkuFocused(false), 150)}
+                      onChange={(e) => {
+                        setRequestForm({ ...requestForm, item: e.target.value });
+                        setSubmissionStatus(null);
+                      }}
                       className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
                     />
+                    {isSkuFocused && skuSuggestions.length > 0 && (
+                      <div className="absolute z-20 mt-2 w-full bg-white border border-slate-200 rounded-[16px] shadow-xl overflow-hidden">
+                        {skuSuggestions.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSelectSku(product)}
+                            className="w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors border-b border-slate-100 last:border-b-0"
+                          >
+                            <p className="font-bold text-sm text-slate-900">{product.mock_id} · {product.name}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              {product.category} • Stock {product.stock}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -211,16 +480,26 @@ export default function LogisticsHubCollections() {
                   <input 
                     type="number"
                     placeholder="E.g. 500 units"
+                    value={requestForm.quantity}
+                    onChange={(e) => setRequestForm({ ...requestForm, quantity: e.target.value })}
                     className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
                   />
                 </div>
                 <div className="flex items-end">
-                  <button className="w-full h-11 bg-slate-900 text-white rounded-[12px] font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                  <button
+                    onClick={handleSubmitRequest}
+                    className="w-full h-11 bg-slate-900 text-white rounded-[12px] font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                  >
                     Submit Request to Hub
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
+              {submissionStatus && (
+                <p className="mt-4 text-sm font-bold text-emerald-600">
+                  {submissionStatus}
+                </p>
+              )}
             </div>
 
             {/* Recent Orders List for the Shop */}
@@ -230,10 +509,7 @@ export default function LogisticsHubCollections() {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Real-time Fulfillment Tracking</p>
                </div>
                <div className="divide-y divide-slate-100">
-                  {[
-                    { id: 'ORD-921', item: 'Thai Fragrant Rice 5kg', qty: 240, status: 'In Transit', date: 'Today' },
-                    { id: 'ORD-920', item: 'Cooking Oil Premium 2L', qty: 150, status: 'Confirmed', date: 'Yesterday' },
-                  ].map((order) => (
+                  {recentRequests.map((order) => (
                     <div key={order.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-all">
                       <div className="flex items-center gap-4">
                          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[#ff6900]">
@@ -245,11 +521,13 @@ export default function LogisticsHubCollections() {
                          </div>
                       </div>
                       <div className="text-right">
-                         <span className={`px-2.5 py-1 rounded-[6px] font-black text-[9px] uppercase tracking-widest ${
-                            order.status === 'In Transit' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                        <span className={`px-2.5 py-1 rounded-[6px] font-black text-[9px] uppercase tracking-widest ${
+                            order.status === 'In Transit' || order.status === 'Submitted'
+                              ? 'bg-orange-50 text-[#ff6900] border border-orange-100'
+                              : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                          }`}>
                            {order.status}
-                         </span>
+                        </span>
                          <p className="text-[9px] text-slate-400 font-bold mt-1.5 uppercase italic">{order.date}</p>
                       </div>
                     </div>
