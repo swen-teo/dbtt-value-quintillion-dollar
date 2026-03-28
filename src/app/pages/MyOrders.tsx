@@ -29,6 +29,8 @@ export default function MyOrders() {
           ...order,
           createdAt: order.created_at,
           total: order.total_amount,
+          pickupLocation: order.pickup_location,
+          pickupDate: order.pickup_date ? new Date(order.pickup_date).toLocaleDateString() : "-",
           items: order.order_items.map((item: any) => ({
             ...item,
             product: item.products,
@@ -369,8 +371,8 @@ export default function MyOrders() {
                        <p className="font-black text-gray-900 text-lg">
                           ${((
                             selectedOrder.paymentMethod === 'bnpl' 
-                              ? (item.product?.bnplPrice ?? item.product?.cashPrice ?? item.product?.price ?? item.price ?? 0)
-                              : (item.product?.cashPrice ?? item.product?.price ?? item.product?.bnplPrice ?? item.price ?? 0)
+                              ? (item.product?.bnplPrice ?? item.product?.cashPrice ?? 0)
+                              : (item.product?.cashPrice ?? item.product?.bnpl_price ?? 0)
                           ) * (item.quantity ?? 1)).toFixed(2)}
                        </p>
                     </div>
