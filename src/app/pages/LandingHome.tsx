@@ -24,12 +24,9 @@ export default function LandingHome() {
 
           {/* Navigation */}
           <div className="flex items-center gap-6">
-            <button className="text-white/90 hover:text-white text-sm font-semibold transition-colors">
-              Pricing
-            </button>
             <button 
               onClick={() => navigate('/login')}
-              className="text-white/90 hover:text-white text-sm font-semibold transition-colors"
+              className="bg-white text-[#ff6900] px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
             >
               Log In
             </button>
@@ -48,41 +45,41 @@ export default function LandingHome() {
         <div className="max-w-[1440px] mx-auto px-8 py-5">
           <div className="flex items-center justify-center gap-16">
             {/* In-Store Pickup */}
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-100 transition-all">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center transition-all">
                 <Package className="w-5 h-5 text-[#ff6900]" />
               </div>
-              <span className="text-gray-700 text-sm font-semibold group-hover:text-[#ff6900] transition-colors">
+              <span className="text-gray-700 text-sm font-semibold transition-colors">
                 In-Store Pickup
               </span>
             </div>
 
             {/* Membership */}
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-100 transition-all">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center transition-all">
                 <CreditCard className="w-5 h-5 text-[#155dfc]" />
               </div>
-              <span className="text-gray-700 text-sm font-semibold group-hover:text-[#155dfc] transition-colors">
+              <span className="text-gray-700 text-sm font-semibold transition-colors">
                 Membership
               </span>
             </div>
 
             {/* Active Promos */}
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-100 transition-all">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center transition-all">
                 <Tag className="w-5 h-5 text-[#ff6900]" />
               </div>
-              <span className="text-gray-700 text-sm font-semibold group-hover:text-[#ff6900] transition-colors">
+              <span className="text-gray-700 text-sm font-semibold transition-colors">
                 Active Promos
               </span>
             </div>
 
             {/* Find A Store */}
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-100 transition-all">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center transition-all">
                 <Store className="w-5 h-5 text-[#155dfc]" />
               </div>
-              <span className="text-gray-700 text-sm font-semibold group-hover:text-[#155dfc] transition-colors">
+              <span className="text-gray-700 text-sm font-semibold transition-colors">
                 Find A Store
               </span>
             </div>
