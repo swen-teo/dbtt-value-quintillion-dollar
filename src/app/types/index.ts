@@ -11,6 +11,7 @@ export interface Product {
   unit: string;
   stock: number;
   description?: string;
+  dbId?: string;
 }
 
 export interface CartItem {

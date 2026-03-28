@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { MapPin, Calendar, CreditCard, Banknote, CheckCircle } from 'lucide-react';
-import { products, outletLocations } from '../data/mockData';
+import { outletLocations } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 import { CartItem, OutletLocation } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { products } = useProducts();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [pickupType, setPickupType] = useState<'immediate' | 'scheduled'>('immediate');
   const [selectedOutlet, setSelectedOutlet] = useState<OutletLocation | null>(null);
@@ -25,8 +28,10 @@ export default function Checkout() {
   const isGrabLinked = sessionStorage.getItem('grabLinked') === 'true';
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    if (products.length > 0) {
+      loadCart();
+    }
+  }, [products]);
 
   const loadCart = () => {
     try {
@@ -48,7 +53,7 @@ export default function Checkout() {
     }
   };
 
-  const calculateTotal = () => {
+  const getTotals = () => {
     try {
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       const subtotal = cartItems.reduce((sum, item) => {
@@ -59,10 +64,10 @@ export default function Checkout() {
         return sum + price * item.quantity;
       }, 0);
       const tax = subtotal * 0.09;
-      return subtotal + tax;
+      return { subtotal, tax, total: subtotal + tax };
     } catch (error) {
-      console.error('Error calculating total:', error);
-      return 0;
+      console.error('Error calculating totals:', error);
+      return { subtotal: 0, tax: 0, total: 0 };
     }
   };
 
@@ -73,9 +78,9 @@ export default function Checkout() {
     return true;
   });
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setErrorObj(null);
-    const totalCount = calculateTotal();
+    const { total } = getTotals();
 
     if (paymentMethod === 'bnpl') {
       if (accountType !== 'prime') {
@@ -109,7 +114,7 @@ export default function Checkout() {
     const orderData = {
       id: `ORD-${Date.now().toString().slice(-4)}`,
       items: cartItems,
-      total: totalCount,
+      total: total,
       paymentMethod,
       pickupType,
       pickupLocation: selectedOutlet?.name || '',
@@ -131,11 +136,46 @@ export default function Checkout() {
     }
 
     localStorage.removeItem('cart');
+
+    // Attempt Supabase Insert
+    try {
+      const spUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      if (spUrl && spUrl !== 'YOUR_SUPABASE_PROJECT_URL' && !spUrl.includes('placeholder')) {
+        const { data: orderDataRaw, error: orderError } = await supabase.from('orders').insert({
+          customer_name: cardDetails.name || 'Guest',
+          shop_name: 'Guest Shop',
+          total_amount: total,
+          payment_method: paymentMethod,
+          bnpl_installments: paymentMethod === 'bnpl' ? 4 : null,
+          pickup_type: pickupType,
+          pickup_location: selectedOutlet?.name || '',
+          pickup_date: pickupDate ? new Date(pickupDate).toISOString() : new Date().toISOString(),
+          status: 'pending'
+        }).select().single();
+
+        if (orderError) throw orderError;
+
+        if (orderDataRaw) {
+          const orderItems = cartItems.map(item => ({
+            order_id: orderDataRaw.id,
+            product_id: item.product.dbId || item.product.id, // Will fail if dbId is missing and id isn't UUID, but safe effort
+            quantity: item.quantity,
+            unit_price: paymentMethod === 'bnpl' ? item.product.bnplPrice : item.product.cashPrice
+          }));
+          
+          const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+          if (itemsError) throw itemsError;
+          console.log("Order saved to Supabase successfully.");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save order to Supabase. Fallback used.", err);
+    }
     
     navigate('/customer/order-confirmation');
   };
 
-  const total = calculateTotal();
+  const { subtotal, tax, total } = getTotals();
 
   return (
     <div className="bg-white min-h-screen">
@@ -437,8 +477,16 @@ export default function Checkout() {
                 ))}
               </div>
 
-              <div className="border-t border-[#e5e7eb] pt-4 mb-4">
-                <div className="flex justify-between mb-2">
+              <div className="border-t border-[#e5e7eb] pt-4 mb-4 space-y-2">
+                <div className="flex justify-between text-sm text-[#6a7282]">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-[#6a7282]">
+                  <span>GST (9%)</span>
+                  <span>${tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between mt-4 pt-4 border-t border-[#e5e7eb]">
                   <span className="font-bold text-lg text-[#101828]">Total</span>
                   <span className="font-bold text-2xl text-[#ff6900]">${total.toFixed(2)}</span>
                 </div>

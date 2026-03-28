@@ -10,3 +10,6 @@ __pycache__/
 *$py.class
 forecasting_service/venv/
 forecasting_service/__pycache__/
+
+.env
+.env.local

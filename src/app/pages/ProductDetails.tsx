@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 import { Award, CreditCard, CheckCircle, TrendingDown } from 'lucide-react';
 
 export default function ProductDetails() {
+  const { products, loading } = useProducts();
   const { id } = useParams();
   const navigate = useNavigate();
   const product = products.find((p) => p.id === id);
   const [quantity, setQuantity] = useState(1);
+
+  if (loading) {
+    return <div className="p-8"><p>Loading product...</p></div>;
+  }
 
   if (!product) {
     return (

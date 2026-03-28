@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ShoppingCart, Package, Zap, Search } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 import { addToCart } from '../utils/cartHelpers';
 
 export default function ShopPage() {
+  const { products, loading } = useProducts();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-xl">Loading products...</p></div>;
+  }
 
   const categories = ['all', 'BEVERAGES', 'SNACKS', 'HOUSEHOLD', 'CLEARANCE'];
 

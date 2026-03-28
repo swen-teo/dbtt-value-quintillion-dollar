@@ -193,7 +193,11 @@ export default function Cart() {
                 <div className="space-y-4 mb-6 pb-6 border-b-2 border-gray-100">
                   <div className="flex justify-between text-gray-700">
                     <span>Subtotal</span>
-                    <span className="font-semibold">${total.toFixed(2)}</span>
+                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-700">
+                    <span>GST (9%)</span>
+                    <span className="font-semibold">${tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>Service Fee</span>
