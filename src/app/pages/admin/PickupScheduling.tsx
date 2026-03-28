@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
-import { outletLocations } from '../../data/mockData';
+import { useOutletLocations } from '../../hooks/useData';
 
 export default function PickupScheduling() {
+  const { locations: outletLocations } = useOutletLocations();
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedOutlet, setSelectedOutlet] = useState<string>('all');

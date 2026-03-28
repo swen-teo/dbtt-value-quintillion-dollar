@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Trash2, Plus, Minus, ShoppingBag, CreditCard } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 import { CartItem } from '../types';
 
 export default function Cart() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { products } = useProducts();
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    if (products.length > 0) {
+      loadCart();
+    }
+  }, [products]);
 
   const loadCart = () => {
     try {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Package, CheckCircle, XCircle, Eye } from 'lucide-react';
-import { products } from '../../data/mockData';
+// Removed mock data import
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState<any[]>([]);

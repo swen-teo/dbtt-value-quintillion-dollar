@@ -1,3 +1,10 @@
+DROP TABLE IF EXISTS public.order_items CASCADE;
+DROP TABLE IF EXISTS public.orders CASCADE;
+DROP TABLE IF EXISTS public.customers CASCADE;
+DROP TABLE IF EXISTS public.admins CASCADE;
+DROP TABLE IF EXISTS public.outlet_locations CASCADE;
+DROP TABLE IF EXISTS public.products CASCADE;
+
 -- Products table
 CREATE TABLE public.products (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -31,12 +38,24 @@ CREATE TABLE public.customers (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id), -- If using Supabase Auth
   shop_name text NOT NULL,
+  uen text,
+  address text,
   contact_person text NOT NULL,
   email text NOT NULL,
+  password text NOT NULL, -- Added to support login (Note: Plain text for simplicity per user flow)
   phone text NOT NULL,
   credit_limit numeric(10, 2) NOT NULL DEFAULT 0,
   used_credit numeric(10, 2) NOT NULL DEFAULT 0,
   membership_tier text NOT NULL DEFAULT 'standard'
+);
+
+-- Admins table
+CREATE TABLE public.admins (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  email text UNIQUE NOT NULL,
+  password text NOT NULL,
+  name text NOT NULL,
+  role text NOT NULL DEFAULT 'admin'
 );
 
 -- Orders table
@@ -68,6 +87,7 @@ CREATE TABLE public.order_items (
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.outlet_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
@@ -83,3 +103,8 @@ CREATE POLICY "Enable insert for anonymous users" ON public.order_items FOR INSE
 CREATE POLICY "Enable select for anonymous users" ON public.order_items FOR SELECT USING (true);
 
 CREATE POLICY "Enable read access for anonymous users" ON public.customers FOR SELECT USING (true);
+CREATE POLICY "Enable insert for anonymous users" ON public.customers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for anonymous users" ON public.customers FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for anonymous users" ON public.admins FOR SELECT USING (true);
+CREATE POLICY "Enable insert for anonymous users" ON public.admins FOR INSERT WITH CHECK (true);
