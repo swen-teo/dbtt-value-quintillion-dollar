@@ -233,6 +233,14 @@ export default function OrderManagement() {
                         )}
                         {order.status === 'confirmed' && (
                           <button
+                            onClick={() => updateOrderStatus(order.id, 'preparing')}
+                            className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                          >
+                            Prepare for Pickup
+                          </button>
+                        )}
+                        {order.status === 'preparing' && (
+                          <button
                             onClick={() => updateOrderStatus(order.id, 'ready')}
                             className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
@@ -240,11 +248,16 @@ export default function OrderManagement() {
                           </button>
                         )}
                         {order.status === 'ready' && (
+                          <span className="text-xs text-gray-400 italic px-3 py-1.5 whitespace-nowrap">
+                            Awaiting Customer Pickup
+                          </span>
+                        )}
+                        {order.status === 'collected' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'completed')}
-                            className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                            className="px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-lg text-xs font-bold transition-colors whitespace-nowrap shadow-sm"
                           >
-                            Complete
+                            Finalize Completion
                           </button>
                         )}
                         {order.status !== 'completed' && order.status !== 'cancelled' && (
@@ -284,9 +297,21 @@ export default function OrderManagement() {
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600 mb-1">Preparing</p>
+            <p className="font-bold text-2xl text-purple-600">
+              {orders.filter((o) => o.status === 'preparing').length}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Ready for Pickup</p>
             <p className="font-bold text-2xl text-green-600">
               {orders.filter((o) => o.status === 'ready').length}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600 mb-1">Collected (Pending)</p>
+            <p className="font-bold text-2xl text-blue-600">
+              {orders.filter((o) => o.status === 'collected').length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
