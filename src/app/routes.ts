@@ -15,8 +15,9 @@ import OrderTracking from "./pages/OrderTracking";
 import Deals from "./pages/Deals";
 import AutoPay from "./pages/AutoPay";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import AdminLogin from "./pages/admin/AdminLogin";
+
 import Dashboard from "./pages/admin/Dashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
 import OrderManagement from "./pages/admin/OrderManagement";
 import PickupScheduling from "./pages/admin/PickupScheduling";
 import CatalogOperations from "./pages/admin/CatalogOperations";

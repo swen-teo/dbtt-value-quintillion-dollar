@@ -1,14 +1,31 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Lock, Mail, Shield, ArrowRight } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .single();
+
+    if (error || !data) {
+      alert('Invalid admin credentials. Please check your email and password.');
+      return;
+    }
+
+    sessionStorage.setItem('adminId', data.id);
+    sessionStorage.setItem('adminName', data.name);
+    sessionStorage.setItem('adminRole', data.role);
     navigate('/admin/dashboard');
   };
 

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, ShoppingCart, Star } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 
 export default function QuickOrder() {
   const navigate = useNavigate();
+  const { products } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [orderItems, setOrderItems] = useState<{ [key: string]: number }>({});
 

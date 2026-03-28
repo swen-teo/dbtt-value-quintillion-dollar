@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Package, TrendingUp, Users, MapPin, Clock, CheckCircle, AlertTriangle, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { products } from '../../data/mockData';
+import { useProducts } from '../../hooks/useData';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { products } = useProducts();
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter'>('week');
 
   const stats = [

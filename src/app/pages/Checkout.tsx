@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { MapPin, Calendar, CreditCard, Banknote, CheckCircle } from 'lucide-react';
-import { outletLocations } from '../data/mockData';
-import { useProducts } from '../hooks/useData';
+
+import { useProducts, useOutletLocations } from '../hooks/useData';
 import { CartItem, OutletLocation } from '../types';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { products } = useProducts();
+  const { locations: outletLocations } = useOutletLocations();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [pickupType, setPickupType] = useState<'immediate' | 'scheduled'>('immediate');
   const [selectedOutlet, setSelectedOutlet] = useState<OutletLocation | null>(null);
@@ -24,7 +25,7 @@ export default function Checkout() {
     name: ''
   });
 
-  const accountType = sessionStorage.getItem('accountType') || 'normal';
+  const accountType = sessionStorage.getItem('accountType') || 'standard';
   const isGrabLinked = sessionStorage.getItem('grabLinked') === 'true';
 
   useEffect(() => {
@@ -141,9 +142,14 @@ export default function Checkout() {
     try {
       const spUrl = (import.meta as any).env.VITE_SUPABASE_URL;
       if (spUrl && spUrl !== 'YOUR_SUPABASE_PROJECT_URL' && !spUrl.includes('placeholder')) {
+        const customerId = sessionStorage.getItem('customerId');
+        const customerName = sessionStorage.getItem('contactPerson') || 'Guest';
+        const shopName = sessionStorage.getItem('shopName') || 'Guest Shop';
+
         const { data: orderDataRaw, error: orderError } = await supabase.from('orders').insert({
-          customer_name: cardDetails.name || 'Guest',
-          shop_name: 'Guest Shop',
+          customer_id: customerId,
+          customer_name: customerName,
+          shop_name: shopName,
           total_amount: total,
           payment_method: paymentMethod,
           bnpl_installments: paymentMethod === 'bnpl' ? 4 : null,

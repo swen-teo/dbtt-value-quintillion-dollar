@@ -10,6 +10,7 @@ export default function Onboarding() {
     uen: '',
     contactPerson: '',
     email: '',
+    password: '',
     phone: '',
     address: '',
     accountType: 'prime', // 'prime' or 'normal'
@@ -17,7 +18,7 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (step === 2) {
-      const requiredFields = ['shopName', 'uen', 'contactPerson', 'email', 'phone', 'address'];
+      const requiredFields = ['shopName', 'uen', 'contactPerson', 'email', 'password', 'phone', 'address'];
       const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
       
       if (missingFields.length > 0) {
@@ -290,6 +291,19 @@ export default function Onboarding() {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-2">
+                      Password <span className="text-[#ff6900]">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6900] focus:border-transparent transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">
                       Phone <span className="text-[#ff6900]">*</span>
                     </label>
                     <input
@@ -381,10 +395,10 @@ export default function Onboarding() {
                 Back
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   sessionStorage.clear();
                   localStorage.clear();
-                  sessionStorage.setItem('accountType', 'normal');
+                  sessionStorage.setItem('accountType', 'standard');
                   sessionStorage.setItem('shopName', formData.shopName);
                   sessionStorage.setItem('uen', formData.uen || '');
                   sessionStorage.setItem('contactPerson', formData.contactPerson || '');
@@ -393,6 +407,33 @@ export default function Onboarding() {
                   sessionStorage.setItem('address', formData.address || '');
                   sessionStorage.setItem('creditLimit', '0');
                   sessionStorage.setItem('usedCredit', '0');
+
+                  try {
+                    const spUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+                    if (spUrl && spUrl !== 'YOUR_SUPABASE_PROJECT_URL' && !spUrl.includes('placeholder')) {
+                      const { supabase } = await import('../lib/supabaseClient');
+                      const { data: newCustomer, error } = await supabase.from('customers').insert({
+                        shop_name: formData.shopName,
+                        uen: formData.uen || null,
+                        address: formData.address || null,
+                        contact_person: formData.contactPerson || '',
+                        email: formData.email || '',
+                        password: formData.password || '',
+                        phone: formData.phone || '',
+                        credit_limit: 0,
+                        used_credit: 0,
+                        membership_tier: 'standard'
+                      }).select().single();
+
+                      if (newCustomer) {
+                        sessionStorage.setItem('customerId', newCustomer.id);
+                      }
+                      if (error) console.error("Error saving customer to Supabase:", error);
+                    }
+                  } catch (err) {
+                    console.error("Failed to save customer to Supabase:", err);
+                  }
+
                   window.dispatchEvent(new Event('accountTypeChanged'));
                   handleNext();
                 }}

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
-import { outletLocations } from '../../data/mockData';
+import { useOutletLocations } from '../../hooks/useData';
 
 export default function PickupScheduling() {
+  const { locations: outletLocations } = useOutletLocations();
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedOutlet, setSelectedOutlet] = useState<string>('all');
+  const [schedulingStatus, setSchedulingStatus] = useState<Record<string, string>>({});
+  const [planGenerated, setPlanGenerated] = useState(false);
+
 
   useEffect(() => {
     loadOrders();
@@ -205,8 +209,20 @@ export default function PickupScheduling() {
                     </div>
 
                     {/* Routing Action */}
-                    <button className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white rounded-lg font-bold hover:shadow-lg transition-all text-sm">
-                      Schedule Delivery Route
+                    <button 
+                      onClick={() => {
+                        setSchedulingStatus(prev => ({ ...prev, [outlet.id]: 'scheduling' }));
+                        setTimeout(() => setSchedulingStatus(prev => ({ ...prev, [outlet.id]: 'done' })), 1500);
+                      }}
+                      disabled={!!schedulingStatus[outlet.id]}
+                      className={`w-full mt-3 px-4 py-2 text-white rounded-lg font-bold hover:shadow-lg transition-all text-sm ${
+                        schedulingStatus[outlet.id] === 'done'
+                          ? 'bg-green-500'
+                          : schedulingStatus[outlet.id] === 'scheduling'
+                          ? 'bg-gray-400 cursor-wait'
+                          : 'bg-gradient-to-r from-[#ff6900] to-[#ff8534]'
+                      }`}>
+                      {schedulingStatus[outlet.id] === 'done' ? 'Route Scheduled ✅' : schedulingStatus[outlet.id] === 'scheduling' ? 'Scheduling...' : 'Schedule Delivery Route'}
                     </button>
                   </div>
                 );
@@ -274,8 +290,18 @@ export default function PickupScheduling() {
                 <p className="text-xs text-gray-700 mb-3">
                   {scheduledOrders.length} scheduled order(s) need to be routed to heartland outlets
                 </p>
-                <button className="w-full px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 text-white rounded-lg font-bold hover:shadow-lg transition-all text-sm">
-                  Generate Routing Plan
+                <button 
+                  onClick={() => {
+                    setPlanGenerated(true);
+                    setTimeout(() => setPlanGenerated(false), 3000);
+                  }}
+                  disabled={planGenerated}
+                  className={`w-full px-4 py-2 text-white rounded-lg font-bold hover:shadow-lg transition-all text-sm ${
+                    planGenerated 
+                      ? 'bg-green-600'
+                      : 'bg-gradient-to-r from-yellow-600 to-yellow-700'
+                  }`}>
+                  {planGenerated ? 'Routing Plan Generated ✅' : 'Generate Routing Plan'}
                 </button>
               </div>
             )}

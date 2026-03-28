@@ -31,12 +31,26 @@ CREATE TABLE public.customers (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id), -- If using Supabase Auth
   shop_name text NOT NULL,
+  uen text,
+  address text,
   contact_person text NOT NULL,
   email text NOT NULL,
+  password text NOT NULL, -- Added to support login (Note: Plain text for simplicity per user flow)
   phone text NOT NULL,
+  grab_email text,
+  grab_phone text,
   credit_limit numeric(10, 2) NOT NULL DEFAULT 0,
   used_credit numeric(10, 2) NOT NULL DEFAULT 0,
   membership_tier text NOT NULL DEFAULT 'standard'
+);
+
+-- Admins table
+CREATE TABLE public.admins (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  email text UNIQUE NOT NULL,
+  password text NOT NULL,
+  name text NOT NULL,
+  role text NOT NULL DEFAULT 'admin'
 );
 
 -- Orders table
@@ -68,12 +82,14 @@ CREATE TABLE public.order_items (
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.outlet_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (open for development, restrict later)
 CREATE POLICY "Enable read access for all users" ON public.products FOR SELECT USING (true);
 CREATE POLICY "Enable read access for all users" ON public.outlet_locations FOR SELECT USING (true);
+CREATE POLICY "Enable read access for admins" ON public.admins FOR SELECT USING (true);
 
 -- Allow anonymous inserts for orders since there's no auth setup yet
 CREATE POLICY "Enable insert for anonymous users" ON public.orders FOR INSERT WITH CHECK (true);

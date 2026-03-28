@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router';
 import { Zap, TrendingDown, Clock, ShoppingCart, ArrowLeft } from 'lucide-react';
-import { products } from '../data/mockData';
+import { useProducts } from '../hooks/useData';
 import { addToCart } from '../utils/cartHelpers';
 
 export default function Deals() {
   const navigate = useNavigate();
+  const { products } = useProducts();
 
   // Mock clearance/deal products
   const dealProducts = products.filter(p => p.savingsPercent >= 10);

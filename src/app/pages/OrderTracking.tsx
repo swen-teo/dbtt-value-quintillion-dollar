@@ -1,32 +1,84 @@
 import { useState, useEffect } from 'react';
-import { Package, MapPin, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { products } from '../data/mockData';
+import { Package, MapPin, Calendar, CheckCircle, Clock, XCircle, RefreshCcw } from 'lucide-react';
+import { useProducts } from '../hooks/useData';
+import { supabase } from '../lib/supabaseClient';
 
 export default function OrderTracking() {
   const [orders, setOrders] = useState<any[]>([]);
+  const { products } = useProducts();
 
   useEffect(() => {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
+    const customerId = sessionStorage.getItem('customerId');
+    if (!customerId) return;
+
     try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          id: order.id,
+          createdAt: order.created_at,
+          totalAmount: order.total_amount,
+          status: order.status,
+          pickupLocation: order.pickup_location,
+          pickupType: order.pickup_type,
+          pickupDate: order.pickup_date,
+          // Since OrderTracking seems to expect items as part of the order object in the render 
+          // but doesn't fetch them here originally, I'll fetch them for completeness if needed 
+          // or at least handle the mapping if it was stored in items before.
+          // The current render uses order.items, which is not in the orders table directly.
+          items: [] // Placeholder, adding proper fetch below
+        }));
+
+        // Fetch items for these orders
+        const orderIds = mappedOrders.map(o => o.id);
+        const { data: itemsData } = await supabase
+          .from('order_items')
+          .select('*')
+          .in('order_id', orderIds);
+
+        if (itemsData) {
+          mappedOrders.forEach(order => {
+            order.items = itemsData.filter(item => item.order_id === order.id).map(item => ({
+              product: { id: item.product_id },
+              quantity: item.quantity
+            }));
+          });
+        }
+
+        setOrders(mappedOrders);
+      }
+    } catch (error: any) {
+      console.error('Error loading orders from Supabase:', error);
+      alert('Unable to load orders from Supabase. Falling back to local data. Error: ' + error.message);
       const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       setOrders(savedOrders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      setOrders([]);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-100 text-orange-800';
       case 'confirmed':
         return 'bg-blue-100 text-blue-800';
+      case 'preparing': // Order Preparing
+        return 'bg-purple-100 text-purple-800';
       case 'ready':
         return 'bg-green-100 text-green-800';
+      case 'collected':
+        return 'bg-blue-100 text-blue-800';
       case 'completed':
         return 'bg-gray-100 text-gray-800';
       case 'cancelled':
@@ -41,10 +93,13 @@ export default function OrderTracking() {
       case 'pending':
         return <Clock className="w-5 h-5" />;
       case 'confirmed':
-      case 'ready':
         return <CheckCircle className="w-5 h-5" />;
-      case 'completed':
+      case 'preparing':
         return <Package className="w-5 h-5" />;
+      case 'ready':
+        return <MapPin className="w-5 h-5" />;
+      case 'completed':
+        return <CheckCircle className="w-5 h-5" />;
       case 'cancelled':
         return <XCircle className="w-5 h-5" />;
       default:
@@ -70,7 +125,16 @@ export default function OrderTracking() {
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-[1200px] mx-auto p-8">
-        <h1 className="font-bold text-3xl text-[#101828] mb-8">Order Tracking</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-bold text-3xl text-[#101828]">Order Tracking</h1>
+          <button 
+            onClick={loadOrders}
+            className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all font-bold text-[#101828] shadow-sm active:scale-95"
+          >
+            <RefreshCcw className="w-4 h-4 text-[#ff6900]" />
+            Refresh Status
+          </button>
+        </div>
 
         <div className="space-y-6">
           {orders.map((order) => (
@@ -156,7 +220,7 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          ['confirmed', 'ready', 'completed'].includes(order.status)
+                          ['confirmed', 'preparing', 'ready', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
@@ -166,7 +230,17 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          ['ready', 'completed'].includes(order.status)
+                          ['preparing', 'ready', 'completed'].includes(order.status)
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
+                        }`}>
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-sm text-[#6a7282]">Order Preparing</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          ['ready', 'collected', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
@@ -176,13 +250,13 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          order.status === 'completed'
+                          ['collected', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
                           <CheckCircle className="w-3 h-3 text-white" />
                         </div>
-                        <span className="text-sm text-[#6a7282]">Completed</span>
+                        <span className="text-sm text-[#6a7282]">Collected</span>
                       </div>
                     </div>
                   </div>

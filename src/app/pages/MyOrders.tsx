@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Package, MapPin, X, ArrowRight, CreditCard, Shield } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Package, MapPin, X, ArrowRight, CreditCard, Shield, RefreshCcw } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export default function MyOrders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -7,46 +8,86 @@ export default function MyOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   useEffect(() => {
-    const allOrdersStr = localStorage.getItem('allOrders');
-    const lastOrderStr = localStorage.getItem('lastOrder');
-    
-    if (allOrdersStr) {
-      const all = JSON.parse(allOrdersStr);
-      // Sort by date descending
-      const sorted = [...all].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setOrders(sorted);
-      setLastOrder(sorted[0]);
-    } else if (lastOrderStr) {
-      const saved = JSON.parse(lastOrderStr);
-      setLastOrder(saved);
-      setOrders([saved]);
-    }
+    loadOrders();
   }, []);
 
-  const markAsCollected = (orderId: string) => {
-    const freshOrders = JSON.parse(localStorage.getItem('allOrders') || '[]');
-    const updated = freshOrders.map((o: any) => o.id === orderId ? { ...o, status: 'Collected' } : o);
-    setOrders(updated);
-    localStorage.setItem('allOrders', JSON.stringify(updated));
-    // Update lastOrder too if it was this one
-    if (lastOrder?.id === orderId) {
-      setLastOrder({ ...lastOrder, status: 'Collected' });
+  const loadOrders = async () => {
+    const customerId = sessionStorage.getItem('customerId');
+    if (!customerId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*, products(*))')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          createdAt: order.created_at,
+          total: order.total_amount,
+          items: order.order_items.map((item: any) => ({
+            ...item,
+            product: item.products,
+            quantity: item.quantity
+          }))
+        }));
+        setOrders(mappedOrders);
+        setLastOrder(mappedOrders[0]);
+      }
+    } catch (err: any) {
+      console.error("Error loading orders from Supabase:", err);
+      alert("Unable to load orders from Supabase. Falling back to local data. Error: " + err.message);
+      // Fallback to localStorage if needed
+      const allOrdersStr = localStorage.getItem('allOrders');
+      if (allOrdersStr) {
+        const all = JSON.parse(allOrdersStr);
+        const sorted = [...all].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setOrders(sorted);
+        setLastOrder(sorted[0]);
+      }
+    }
+  };
+
+  const markAsCollected = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'collected' })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'collected' } : o));
+      if (lastOrder?.id === orderId) {
+        setLastOrder({ ...lastOrder, status: 'collected' });
+      }
+      alert('Order marked as Collected! Admin will finalize the order shortly.');
+    } catch (err: any) {
+      console.error("Error marking order as collected:", err);
+      alert("Failed to update status: " + err.message);
     }
   };
 
   const stats = [
     { label: 'TOTAL ORDERS', value: orders.length.toString(), subtitle: 'Since Mar 2026', color: 'border-blue-200 bg-blue-50' },
-    { label: 'PENDING', value: orders.filter(o => o.status === 'Pending').length.toString(), subtitle: 'Awaiting confirmation', color: 'border-orange-200 bg-orange-50' },
-    { label: 'READY FOR PICKUP', value: orders.filter(o => o.status === 'Ready For Pickup').length.toString(), subtitle: 'Awaiting collection', color: 'border-purple-200 bg-purple-50' },
-    { label: 'COLLECTED', value: orders.filter(o => o.status === 'Collected').length.toString(), subtitle: '94.2% on schedule', color: 'border-green-200 bg-green-50' },
+    { label: 'PENDING', value: orders.filter(o => o.status === 'pending').length.toString(), subtitle: 'Awaiting confirmation', color: 'border-orange-200 bg-orange-50' },
+    { label: 'READY FOR PICKUP', value: orders.filter(o => o.status === 'ready').length.toString(), subtitle: 'Awaiting collection', color: 'border-purple-200 bg-purple-50' },
+    { label: 'COLLECTED', value: orders.filter(o => ['collected', 'completed'].includes(o.status)).length.toString(), subtitle: '94.2% on schedule', color: 'border-green-200 bg-green-50' },
   ];
 
   const getStatusStep = (status: string): number => {
-    switch(status) {
-      case 'Pending': return 1;
-      case 'Ready For Pickup': return 4;
-      case 'Collected': return 5;
-      case 'Cancelled': return -1;
+    switch(status.toLowerCase()) {
+      case 'pending': return 1;
+      case 'confirmed': return 2;
+      case 'preparing': return 3;
+      case 'ready': return 4;
+      case 'collected': 
+      case 'completed': return 5;
+      case 'cancelled': return -1;
       default: return 1;
     }
   };
@@ -56,7 +97,7 @@ export default function MyOrders() {
   const orderProgress = [
     { step: 1, label: 'Placed', status: currentStep >= 1 ? 'completed' : 'upcoming' },
     { step: 2, label: 'Confirmed', status: currentStep >= 2 ? 'completed' : currentStep === 1 ? 'active' : 'upcoming' },
-    { step: 3, label: 'Picked', status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'upcoming' },
+    { step: 3, label: 'Order Preparing', status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'upcoming' },
     { step: 4, label: 'Ready', status: currentStep >= 4 ? 'completed' : currentStep === 3 ? 'active' : 'upcoming' },
     { step: 5, label: 'Collected', status: currentStep >= 5 ? 'completed' : currentStep === 4 ? 'active' : 'upcoming' },
   ];
@@ -70,6 +111,14 @@ export default function MyOrders() {
             <h1 className="font-bold text-3xl text-[#101828]">My Orders</h1>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-600">
+            <button 
+              onClick={loadOrders}
+              className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all font-bold text-[#101828] shadow-sm active:scale-95"
+            >
+              <RefreshCcw className="w-4 h-4 text-[#ff6900]" />
+              Refresh Status
+            </button>
+            <div className="h-4 w-px bg-gray-300 mx-1" />
             <Calendar className="w-4 h-4" />
             <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </div>
@@ -96,12 +145,17 @@ export default function MyOrders() {
               </p>
             </div>
             <span className={`${
-              lastOrder?.status === 'Collected' ? 'bg-green-100 text-green-700' :
-              lastOrder?.status === 'Ready For Pickup' ? 'bg-purple-100 text-purple-700' :
-              lastOrder?.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+              lastOrder?.status === 'completed' ? 'bg-green-100 text-green-700' :
+              lastOrder?.status === 'collected' ? 'bg-blue-100 text-blue-700' :
+              lastOrder?.status === 'ready' ? 'bg-purple-100 text-purple-700' :
+              lastOrder?.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
+              lastOrder?.status === 'cancelled' ? 'bg-red-100 text-red-700' :
               'bg-orange-100 text-orange-700'
-            } px-4 py-2 rounded-xl font-bold text-sm`}>
-              {lastOrder?.status || 'No Order'}
+            } px-4 py-2 rounded-xl font-bold text-sm capitalize`}>
+              {lastOrder?.status === 'completed' || lastOrder?.status === 'collected' ? 'Collected' : 
+               lastOrder?.status === 'ready' ? 'Ready For Pickup' : 
+               lastOrder?.status === 'preparing' ? 'Order Preparing' : 
+               lastOrder?.status || 'No Order'}
             </span>
           </div>
 
@@ -161,11 +215,16 @@ export default function MyOrders() {
                     <td className="py-4 px-4 font-bold text-gray-900">${(order.total ?? 0).toFixed(2)}</td>
                     <td className="py-4 px-4">
                       <span className={`${
-                        order.status === 'Collected' ? 'bg-green-100 text-green-700' : 
-                        order.status === 'Ready For Pickup' ? 'bg-purple-100 text-purple-700' :
+                        order.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                        order.status === 'collected' ? 'bg-blue-100 text-blue-700' :
+                        order.status === 'ready' ? 'bg-purple-100 text-purple-700' :
+                        order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
                         'bg-orange-100 text-orange-700'
-                      } px-3 py-1 rounded-full font-semibold text-sm`}>
-                        {order.status}
+                      } px-3 py-1 rounded-full font-semibold text-sm capitalize`}>
+                        {order.status === 'completed' || order.status === 'collected' ? 'Collected' : 
+                         order.status === 'ready' ? 'Ready For Pickup' : 
+                         order.status === 'preparing' ? 'Order Preparing' : 
+                         order.status}
                       </span>
                     </td>
                     <td className="py-4 px-4 text-gray-700">{order.pickupDate || '—'}</td>
@@ -177,7 +236,7 @@ export default function MyOrders() {
                         >
                           View
                         </button>
-                        {order.status === 'Ready For Pickup' && (
+                        {order.status === 'ready' && (
                           <button 
                             onClick={() => {
                               if(confirm('Are you at the store and ready to mark this as collected?')) {

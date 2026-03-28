@@ -1,35 +1,89 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Package, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Search, Filter, Package, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
 import { products } from '../../data/mockData';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      const rows = [
+        ['Order ID', 'Customer', 'Shop', 'Pickup Type', 'Location', 'Total', 'Status'],
+        ...filteredOrders.map(o => [o.id, o.customerName, o.shopName, o.pickupType, o.pickupLocation, o.totalAmount.toFixed(2), o.status])
+      ];
+      const csv = rows.map(r => r.join(',')).join('\\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders-export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      setIsExporting(false);
+    }, 1000);
+  };
+
 
   useEffect(() => {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
     try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedOrders = data.map(order => ({
+          ...order,
+          id: order.id,
+          customerName: order.customer_name,
+          shopName: order.shop_name,
+          pickupType: order.pickup_type,
+          pickupLocation: order.pickup_location,
+          totalAmount: order.total_amount,
+          status: order.status,
+          pickupDate: order.pickup_date,
+          createdAt: order.created_at
+        }));
+        setOrders(mappedOrders);
+      }
+    } catch (error: any) {
+      console.error('Error loading orders from Supabase:', error);
+      alert('Unable to load orders from Supabase. Falling back to local data. Error: ' + error.message);
       const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       setOrders(savedOrders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      setOrders([]);
     }
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        alert('Supabase update failed: ' + error.message);
+        throw error;
+      }
+
       const updatedOrders = orders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    } catch (error) {
-      console.error('Error updating order status:', error);
+    } catch (error: any) {
+      console.error('Error updating order status in Supabase:', error);
+      alert('Error updating order status: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -61,9 +115,21 @@ export default function OrderManagement() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-[1400px] mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="font-bold text-3xl text-gray-900 mb-2">Order Management</h1>
-          <p className="text-gray-600">Monitor and manage all customer orders</p>
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="font-bold text-3xl text-gray-900 mb-2">Order Management</h1>
+            <p className="text-gray-600">Monitor and manage all customer orders</p>
+          </div>
+          <button 
+            onClick={handleExport}
+            disabled={isExporting}
+            className={`font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 ${
+              isExporting ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-white text-[#1b2a4a] border-2 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Download className="w-5 h-5" />
+            {isExporting ? 'Exporting...' : 'Export Orders'}
+          </button>
         </div>
 
         {/* Filters */}
@@ -156,41 +222,52 @@ export default function OrderManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-3">
                         {order.status === 'pending' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'confirmed')}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Confirm Order"
+                            className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Confirm
                           </button>
                         )}
                         {order.status === 'confirmed' && (
                           <button
-                            onClick={() => updateOrderStatus(order.id, 'ready')}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Mark as Ready"
+                            onClick={() => updateOrderStatus(order.id, 'preparing')}
+                            className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Prepare for Pickup
+                          </button>
+                        )}
+                        {order.status === 'preparing' && (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, 'ready')}
+                            className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                          >
+                            Mark as Ready
                           </button>
                         )}
                         {order.status === 'ready' && (
+                          <span className="text-xs text-gray-400 italic px-3 py-1.5 whitespace-nowrap">
+                            Awaiting Customer Pickup
+                          </span>
+                        )}
+                        {order.status === 'collected' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'completed')}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            title="Mark as Completed"
+                            className="px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-lg text-xs font-bold transition-colors whitespace-nowrap shadow-sm"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            Finalize Completion
                           </button>
                         )}
-                        <button
-                          onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Cancel Order"
-                        >
-                          <XCircle className="w-5 h-5" />
-                        </button>
+                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -220,9 +297,21 @@ export default function OrderManagement() {
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600 mb-1">Preparing</p>
+            <p className="font-bold text-2xl text-purple-600">
+              {orders.filter((o) => o.status === 'preparing').length}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-1">Ready for Pickup</p>
             <p className="font-bold text-2xl text-green-600">
               {orders.filter((o) => o.status === 'ready').length}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600 mb-1">Collected (Pending)</p>
+            <p className="font-bold text-2xl text-blue-600">
+              {orders.filter((o) => o.status === 'collected').length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">

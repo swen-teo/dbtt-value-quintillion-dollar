@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Package, Truck, ClipboardList, TrendingUp, AlertCircle, RefreshCw, ShoppingCart, Activity, CheckCircle } from 'lucide-react';
+import { Package, Truck, ClipboardList, TrendingUp, AlertCircle, RefreshCw, ShoppingCart, Activity, CheckCircle, Download } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
@@ -11,12 +11,22 @@ export default function Dashboard() {
     const timer = setTimeout(() => setIsSyncing(false), 2200);
     return () => clearTimeout(timer);
   }, []);
+  const handleSync = () => {
+    setIsSyncing(true);
+    setTimeout(() => setIsSyncing(false), 2200);
+  };
+
+  const priorityRestocks = [
+    { name: 'Jasmine Green Tea', stock: 120, forecast: '+75%', status: 'Urgent' },
+    { name: 'Omega 6 Eggs', stock: 45, forecast: '+42%', status: 'Warning' }
+  ];
+
   const handleExportReport = () => {
     const rows = [
       ['Product', 'Current Stock', 'Forecast Demand (7 days)', 'Action'],
       ...priorityRestocks.map(item => [item.name, item.stock, item.forecast, item.status])
     ];
-    const csv = rows.map(r => r.join(',')).join('\n');
+    const csv = rows.map(r => r.join(',')).join('\\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -69,9 +79,13 @@ export default function Dashboard() {
             <p className="text-[#6b7280]">Real-time operational overview for all Valu$ wholesale facilities.</p>
         </div>
         <div className="flex gap-4">
-            <button className="bg-white text-[#1b2a4a] border-2 border-gray-200 font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">
-                <RefreshCw className="w-5 h-5" />
-                Sync Operations
+            <button onClick={handleExportReport} className="bg-white text-[#1b2a4a] border-2 border-gray-200 font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                Export Report
+            </button>
+            <button onClick={handleSync} className="bg-white text-[#1b2a4a] border-2 border-gray-200 font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">
+                <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync Operations'}
             </button>
             <button 
                 onClick={() => navigate('/admin/catalog/forecasting')}
@@ -86,7 +100,7 @@ export default function Dashboard() {
       {/* Primary KPI Row */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList className="w-16 h-16" /></div>
+          <div className="absolute -bottom-6 -right-6 opacity-[0.03] text-[#1b2a4a]"><ClipboardList className="w-32 h-32" /></div>
           <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Orders Placed (MTD)</p>
           <p className="font-extrabold text-4xl text-[#1b2a4a] mb-2">1,267</p>
           <div className="flex items-center gap-2 text-green-600">
@@ -96,7 +110,7 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-10"><Package className="w-16 h-16" /></div>
+          <div className="absolute -bottom-6 -right-6 opacity-[0.03] text-[#1b2a4a]"><Package className="w-32 h-32" /></div>
           <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Global Stock Level</p>
           <p className="font-extrabold text-4xl text-[#1b2a4a] mb-2">452K</p>
           <div className="flex items-center gap-2 text-green-600">
@@ -106,14 +120,14 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-10"><Truck className="w-16 h-16" /></div>
+          <div className="absolute -bottom-6 -right-6 opacity-[0.03] text-[#1b2a4a]"><Truck className="w-32 h-32" /></div>
           <p className="font-semibold text-sm text-gray-500 mb-2 uppercase tracking-wide">Upcoming Deliveries</p>
           <p className="font-extrabold text-4xl text-[#ff6900] mb-2">184</p>
           <p className="font-bold text-sm text-gray-500">Scheduled for next 48 hours</p>
         </div>
 
         <div className="bg-[#1b2a4a] rounded-2xl p-6 shadow-md border border-[#273a61] relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-10"><AlertCircle className="w-16 h-16 text-white" /></div>
+          <div className="absolute -bottom-6 -right-6 opacity-[0.05] text-white"><AlertCircle className="w-32 h-32" /></div>
           <p className="font-semibold text-sm text-blue-200 mb-2 uppercase tracking-wide">AI Forecast Alerts</p>
           <p className="font-extrabold text-4xl text-white mb-2">23</p>
           <p className="font-bold text-sm text-[#ff8534]">Products require drafting PO</p>
@@ -203,7 +217,7 @@ export default function Dashboard() {
                         </div>
                     ))}
                 </div>
-                <button className="w-full mt-4 py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-100 transition-colors">
+                <button onClick={() => navigate('/admin/orders')} className="w-full mt-4 py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-100 transition-colors">
                     View All Orders
                 </button>
             </div>
