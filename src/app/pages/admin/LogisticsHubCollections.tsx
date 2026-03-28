@@ -19,8 +19,8 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 
 export default function LogisticsHubCollections() {
-  const [userRole, setUserRole] = useState<'normalShop' | 'heartlandShop'>('normalShop');
-  const [activeTab, setActiveTab] = useState<'central' | 'heartland'>('central');
+  const [userRole, setUserRole] = useState<'normalShop' | 'hubShop'>('normalShop');
+  const [activeTab, setActiveTab] = useState<'central' | 'hub'>('central');
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
   const [isDownloading, setIsDownloading] = useState(false);
@@ -37,8 +37,8 @@ export default function LogisticsHubCollections() {
           .eq('id', user.id)
           .single();
         
-        if (profile?.type?.includes('heartland')) {
-          setUserRole('heartlandShop');
+        if (profile?.type?.includes('hub')) {
+          setUserRole('hubShop');
         } else {
           setUserRole('normalShop');
         }
@@ -47,7 +47,7 @@ export default function LogisticsHubCollections() {
     checkProfile();
   }, []);
 
-  // Mock Shop Restock Data (Heartland Portal)
+  // Mock Shop Restock Data (Hub Portal)
   const shopRestocks = [
     { id: 'S-701', shop: 'Bedok North Depot', zone: 'East', priority: 'high', units: 450, stockLevel: 12 },
     { id: 'S-702', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, stockLevel: 35 },
@@ -115,12 +115,12 @@ export default function LogisticsHubCollections() {
             Normal Shop
           </button>
           <button
-            onClick={() => setUserRole('heartlandShop')}
+            onClick={() => setUserRole('hubShop')}
             className={`px-4 h-8 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
-              userRole === 'heartlandShop' ? 'bg-[#ff6900] text-white' : 'text-slate-400 hover:text-[#ff6900]'
+              userRole === 'hubShop' ? 'bg-[#ff6900] text-white' : 'text-slate-400 hover:text-orange-600'
             }`}
           >
-            Heartland
+            Hub Store
           </button>
         </div>
       </div>
@@ -138,29 +138,29 @@ export default function LogisticsHubCollections() {
             Central Hub
           </button>
           
-          {/* Conditional Heartland Portal Tab - Completely hidden for non-heartland roles */}
-          {userRole === 'heartlandShop' && (
+          {/* Conditional Hub Portal Tab - Completely hidden for non-hub roles */}
+          {userRole === 'hubShop' && (
             <button
-              onClick={() => setActiveTab('heartland')}
+              onClick={() => setActiveTab('hub')}
               className={`flex items-center gap-2 px-6 h-9 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
-                activeTab === 'heartland' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'text-slate-400 hover:text-[#ff6900]'
+                activeTab === 'hub' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'text-slate-400 hover:text-[#ff6900]'
               }`}
             >
               <Navigation className="w-4 h-4" />
-              Heartland Portal
+              Hub Portal
             </button>
           )}
         </div>
         
-        {userRole !== 'heartlandShop' && (
+        {userRole !== 'hubShop' && (
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-100/50 rounded-[12px] border border-slate-200/50">
             <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest italic leading-none">Heartland Shop Restricted</p>
+            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest italic leading-none">Hub Shop Restricted</p>
           </div>
         )}
       </div>
 
-      {activeTab === 'central' || userRole !== 'heartlandShop' ? (
+      {activeTab === 'central' || userRole !== 'hubShop' ? (
         /* Central Hub View (Pioneer Road HQ) */
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 animate-in fade-in duration-500">
           <div className="space-y-6">
@@ -246,7 +246,7 @@ export default function LogisticsHubCollections() {
           </div>
         </div>
       ) : (
-        /* Heartland Portal View (Shop Management) - ONLY VISIBLE IF userRole === 'heartlandShop' */
+        /* Hub Portal View (Shop Management) - ONLY VISIBLE IF userRole === 'hubShop' */
         <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6 animate-in fade-in duration-500">
           
           {/* Interactive Regional Map Visual */}
@@ -300,7 +300,7 @@ export default function LogisticsHubCollections() {
               <div className="p-7 border-b border-slate-50 flex items-center justify-between">
                 <div>
                   <h2 className="font-black text-xl text-slate-900 tracking-tight leading-none uppercase">
-                    {selectedZone ? `${selectedZone} Zone Restocks` : 'Shop Portal Requests'}
+                    {selectedZone ? `${selectedZone} Zone Restocks` : 'Hub Portal Requests'}
                   </h2>
                   <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mt-2 flex items-center gap-1.5">
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
