@@ -1,158 +1,116 @@
 import { useState, useEffect, useRef } from 'react';
-import { Chart, ScatterController, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, LineController, BarController, BarElement, Filler } from 'chart.js';
-import 'chartjs-adapter-date-fns';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '../../components/ui/chart';
+import {
+  getForecastingSnapshot,
+  getForecastJob,
+  getOutlets,
+  requestForecastGeneration,
+} from '../../lib/forecastingData';
 import { 
   TrendingUp, AlertCircle, AlertTriangle, Package, Truck, 
   RefreshCw, ChevronRight, BarChart3, PieChart, 
   MapPin, Calendar, CheckCircle2, CheckCircle, Info, Activity 
 } from 'lucide-react';
 
-Chart.register(ScatterController, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, LineController, BarController, BarElement, Filler);
-
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
-
 export default function AIForecasting() {
   const [outlets, setOutlets] = useState<{id: number, name: string}[]>([]);
   const [currentOutletId, setCurrentOutletId] = useState<number | null>(null);
   const [summary, setSummary] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [trajectoryData, setTrajectoryData] = useState<any[]>([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [generateProgress, setGenerateProgress] = useState(0);
   const [generateStatus, setGenerateStatus] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  
-  const demandChartRef = useRef<HTMLCanvasElement>(null);
-  const categoryChartRef = useRef<HTMLCanvasElement>(null);
-  const demandChartInstance = useRef<Chart | null>(null);
-  const categoryChartInstance = useRef<Chart | null>(null);
+  const jobPollRef = useRef<number | null>(null);
 
   useEffect(() => {
-    fetchOutlets();
+    let cancelled = false;
+
+    const loadOutlets = async () => {
+      try {
+        setConnectionError(null);
+        const data = await getOutlets();
+        if (cancelled) return;
+        setOutlets(data);
+        setCurrentOutletId((current) => current ?? data[0]?.id ?? null);
+      } catch (e) {
+        if (cancelled) return;
+        console.error('Error fetching outlets', e);
+        setConnectionError(
+          '⚠️ Unable to load forecasting data. Check Supabase or the legacy API configuration.',
+        );
+      }
+    };
+
+    loadOutlets();
     const timer = setTimeout(() => setIsAnalyzing(false), 1800);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
-    if (currentOutletId) {
-      fetchSummary();
-      fetchAlerts();
-      refreshCharts();
-    }
+    if (!currentOutletId) return;
+
+    let cancelled = false;
+
+    const loadSnapshot = async () => {
+      try {
+        const snapshot = await getForecastingSnapshot(currentOutletId);
+        if (cancelled) return;
+        setSummary(snapshot.summary);
+        setAlerts(snapshot.alerts);
+        setTrajectoryData(snapshot.trajectoryData);
+        setCategoryBreakdown(snapshot.categoryBreakdown);
+        setConnectionError(null);
+      } catch (e) {
+        if (cancelled) return;
+        console.error('Error fetching forecasting snapshot', e);
+        setConnectionError(
+          '⚠️ Unable to load forecasting data. Make sure Supabase is seeded or the legacy backend is running.',
+        );
+      }
+    };
+
+    loadSnapshot();
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentOutletId]);
 
-  const fetchOutlets = async () => {
-    try {
-      setConnectionError(null);
-      const res = await fetch(`${API_BASE_URL}/outlets`);
-      if (!res.ok) throw new Error('API Error');
-      const data = await res.json();
-      setOutlets(data);
-      if (data.length > 0 && !currentOutletId) {
-        setCurrentOutletId(data[0].id);
+  useEffect(() => {
+    return () => {
+      if (jobPollRef.current) {
+        window.clearInterval(jobPollRef.current);
       }
-    } catch (e) { 
-      console.error('Error fetching outlets', e); 
-      setConnectionError('⚠️ Cannot connect to Python Backend on Port 5000');
-    }
-  };
-
-  const fetchSummary = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/forecast/summary?outlet_id=${currentOutletId}`);
-      const data = await res.json();
-      setSummary(data);
-    } catch (e) { console.error('Error fetching summary', e); }
-  };
-
-  const fetchAlerts = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/forecast/alerts?outlet_id=${currentOutletId}`);
-      const data = await res.json();
-      setAlerts(data);
-    } catch (e) { console.error('Error fetching alerts', e); }
-  };
-
-  const refreshCharts = async () => {
-    try {
-      const [histRes, forecastRes, summaryRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/historical?days=60&outlet_id=${currentOutletId}`),
-        fetch(`${API_BASE_URL}/forecast/results?outlet_id=${currentOutletId}`),
-        fetch(`${API_BASE_URL}/forecast/summary?outlet_id=${currentOutletId}`)
-      ]);
-      const histData = await histRes.json();
-      let forecastDataList = await forecastRes.json();
-      const summaryData = await summaryRes.json();
-
-      if (forecastDataList.length === 0) return;
-
-      const grouped: any = {};
-      forecastDataList.forEach((row: any) => {
-        const dateStr = row.forecast_date || row.date;
-        if (!grouped[dateStr]) grouped[dateStr] = { predicted: 0, lower: 0, upper: 0 };
-        grouped[dateStr].predicted += (row.predicted_demand || 0);
-        grouped[dateStr].lower += (row.confidence_lower || 0);
-        grouped[dateStr].upper += (row.confidence_upper || 0);
-      });
-      const aggregatedForecast = Object.entries(grouped).sort().map(([date, vals]: any) => ({
-        forecast_date: date,
-        predicted_demand: vals.predicted,
-        confidence_lower: vals.lower,
-        confidence_upper: vals.upper,
-      }));
-
-      const histLabels = histData.map((d: any) => d.date.slice(5));
-      const histValues = histData.map((d: any) => d.total);
-      const forecastLabels = aggregatedForecast.map((d: any) => d.forecast_date.slice(5));
-      const forecastValues = aggregatedForecast.map((d: any) => Math.round(d.predicted_demand));
-      const forecastUpper = aggregatedForecast.map((d: any) => Math.round(d.confidence_upper));
-      const forecastLower = aggregatedForecast.map((d: any) => Math.round(d.confidence_lower));
-
-      const histFull = [...histValues, ...forecastValues.map(() => null)];
-      const forecastFull = [...histValues.map(() => null), ...forecastValues];
-      const upperFull = [...histValues.map(() => null), ...forecastUpper];
-      const lowerFull = [...histValues.map(() => null), ...forecastLower];
-      const allLabels = [...histLabels, ...forecastLabels];
-
-      if (demandChartInstance.current) demandChartInstance.current.destroy();
-      if (demandChartRef.current) {
-        demandChartInstance.current = new Chart(demandChartRef.current, {
-          type: 'line',
-          data: {
-            labels: allLabels,
-            datasets: [
-              { label: 'Historical', data: histFull, borderColor: '#1B2A4A', backgroundColor: 'rgba(27,42,74,0.08)', fill: true, tension: 0.35, pointRadius: 0 },
-              { label: 'Predicted (30d)', data: forecastFull, borderColor: '#E8651A', borderDash: [6, 3], fill: false, tension: 0.35, pointRadius: 0 },
-              { label: 'Upper Bound', data: upperFull, borderColor: 'transparent', backgroundColor: 'rgba(232,101,26,0.08)', fill: '-1', tension: 0.35, pointRadius: 0 },
-              { label: 'Lower Bound', data: lowerFull, borderColor: 'transparent', fill: false, tension: 0.35, pointRadius: 0 }
-            ]
-          },
-          options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'top', align: 'end' } } }
-        });
-      }
-
-      if (categoryChartInstance.current) categoryChartInstance.current.destroy();
-      if (categoryChartRef.current && summaryData.category_breakdown) {
-        categoryChartInstance.current = new Chart(categoryChartRef.current, {
-          type: 'bar',
-          data: {
-            labels: summaryData.category_breakdown.map((c: any) => c.category),
-            datasets: [{
-              data: summaryData.category_breakdown.map((c: any) => c.total_demand),
-              backgroundColor: ['#E8651A', '#1B2A4A', '#3B82F6', '#22C55E', '#F59E0B'],
-              borderRadius: 4,
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
-        });
-      }
-    } catch (e) { console.error('Error refreshing charts', e); }
-  };
+    };
+  }, []);
 
   const handleGenerateForecast = async () => {
     if (isGenerating) return;
     if (!currentOutletId) {
-      setGenerateStatus('❌ Select an outlet or wait for backend to connect');
+      setGenerateStatus('❌ Select an outlet before generating a forecast');
       setIsGenerating(true);
       setTimeout(() => setIsGenerating(false), 2000);
       return;
@@ -160,61 +118,98 @@ export default function AIForecasting() {
     
     setIsGenerating(true);
     setGenerateProgress(0);
-    setGenerateStatus('Initializing ML engine...');
-    
-    // High-fidelity progress simulation for better UX during ML training
-    const interval = setInterval(() => {
-      let currentProgress = 0;
-      setGenerateProgress(p => {
-        let next = p;
-        if (p < 30) next = p + 4;
-        else if (p < 60) next = p + 2;
-        else if (p < 90) next = p + 0.5;
-        currentProgress = next;
-        return next;
-      });
-      
-      setGenerateStatus(_ => {
-        if (currentProgress < 25) return 'Analyzing historical SKU velocity...';
-        if (currentProgress < 50) return 'Training GradientBoosting models...';
-        if (currentProgress < 80) return 'Running 30-day simulations...';
-        return 'Finalizing predictions...';
-      });
-    }, 600);
+    setGenerateStatus('Queueing forecast job...');
 
     try {
-      const res = await fetch(`${API_BASE_URL}/forecast/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outlet_id: Number(currentOutletId) })
-      });
-      
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
-      
-      const data = await res.json();
-      clearInterval(interval);
-      setGenerateProgress(100);
-      
-      if (data.status === 'success') {
-        setGenerateStatus(`✅ Success! Generated forecasts for ${data.models_trained} products.`);
-        fetchSummary();
-        fetchAlerts();
-        refreshCharts();
+      const dispatch = await requestForecastGeneration(Number(currentOutletId));
+
+      if (dispatch.mode === 'legacy') {
+        setGenerateProgress(100);
+        if (dispatch.result.status === 'success') {
+          setGenerateStatus(`✅ Success! Generated forecasts for ${dispatch.result.models_trained} products.`);
+          const snapshot = await getForecastingSnapshot(Number(currentOutletId));
+          setSummary(snapshot.summary);
+          setAlerts(snapshot.alerts);
+          setTrajectoryData(snapshot.trajectoryData);
+          setCategoryBreakdown(snapshot.categoryBreakdown);
+        } else {
+          setGenerateStatus(`❌ Model Error: ${dispatch.result.message || 'Check logs'}`);
+        }
       } else {
-        setGenerateStatus(`❌ Model Error: ${data.message || 'Check logs'}`);
+        const jobId = dispatch.job.id;
+        setGenerateStatus(`⏳ Forecast job queued (${jobId.slice(0, 8)}...)`);
+        setGenerateProgress(dispatch.job.progress || 0);
+
+        if (jobPollRef.current) {
+          window.clearInterval(jobPollRef.current);
+        }
+
+        jobPollRef.current = window.setInterval(async () => {
+          try {
+            const job = await getForecastJob(jobId);
+            setGenerateProgress(job.progress || 0);
+            setGenerateStatus(job.message || `Training... (${job.progress || 0}%)`);
+
+            if (job.status === 'completed') {
+              if (jobPollRef.current) {
+                window.clearInterval(jobPollRef.current);
+                jobPollRef.current = null;
+              }
+
+              const snapshot = await getForecastingSnapshot(Number(currentOutletId));
+              setSummary(snapshot.summary);
+              setAlerts(snapshot.alerts);
+              setTrajectoryData(snapshot.trajectoryData);
+              setCategoryBreakdown(snapshot.categoryBreakdown);
+              setGenerateProgress(100);
+              setGenerateStatus(`✅ Forecast complete for outlet ${currentOutletId}.`);
+
+              setTimeout(() => {
+                setIsGenerating(false);
+                setGenerateProgress(0);
+                setGenerateStatus('');
+              }, 3000);
+            }
+
+            if (job.status === 'failed') {
+              if (jobPollRef.current) {
+                window.clearInterval(jobPollRef.current);
+                jobPollRef.current = null;
+              }
+              setGenerateStatus(`❌ Forecast failed: ${job.message || 'See worker logs'}`);
+              setTimeout(() => {
+                setIsGenerating(false);
+                setGenerateProgress(0);
+                setGenerateStatus('');
+              }, 4000);
+            }
+          } catch (pollError: any) {
+            console.error('Error polling forecast job', pollError);
+            if (jobPollRef.current) {
+              window.clearInterval(jobPollRef.current);
+              jobPollRef.current = null;
+            }
+            setGenerateStatus(`❌ Polling error: ${pollError.message}`);
+            setTimeout(() => {
+              setIsGenerating(false);
+              setGenerateProgress(0);
+              setGenerateStatus('');
+            }, 4000);
+          }
+        }, 2500);
       }
     } catch (e: any) {
-      clearInterval(interval);
+      if (jobPollRef.current) {
+        window.clearInterval(jobPollRef.current);
+        jobPollRef.current = null;
+      }
       setGenerateStatus(`❌ Network Error: ${e.message}`);
+      setTimeout(() => {
+        setIsGenerating(false);
+        setGenerateProgress(0);
+        setGenerateStatus('');
+      }, 4000);
     }
-    
-    setTimeout(() => { 
-      setIsGenerating(false); 
-      setGenerateProgress(0); 
-      setGenerateStatus('');
-    }, 4000);
   };
 
   return (
@@ -329,13 +324,53 @@ export default function AIForecasting() {
             <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-6 shadow-sm h-96">
                 <h3 className="text-lg font-bold text-[#1f2937] mb-4">Historical vs Forecasted Trajectory</h3>
                 <div className="relative h-72 w-full">
-                    <canvas ref={demandChartRef}></canvas>
+                    <ChartContainer
+                      config={{
+                        historical: { label: 'Historical', color: '#1B2A4A' },
+                        forecast: { label: 'Predicted (30d)', color: '#E8651A' },
+                        upper: { label: 'Upper Bound', color: 'rgba(232,101,26,0.20)' },
+                        lower: { label: 'Lower Bound', color: 'rgba(232,101,26,0.10)' },
+                      }}
+                      className="h-full w-full aspect-auto"
+                    >
+                      <ComposedChart data={trajectoryData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="label" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} width={42} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartLegend content={<ChartLegendContent />} />
+                        <Line type="monotone" dataKey="historical" stroke="var(--color-historical)" strokeWidth={3} dot={false} connectNulls />
+                        <Line type="monotone" dataKey="forecast" stroke="var(--color-forecast)" strokeWidth={3} strokeDasharray="6 4" dot={false} connectNulls />
+                        <Line type="monotone" dataKey="upper" stroke="var(--color-upper)" strokeWidth={2} dot={false} connectNulls />
+                        <Line type="monotone" dataKey="lower" stroke="var(--color-lower)" strokeWidth={2} dot={false} connectNulls />
+                      </ComposedChart>
+                    </ChartContainer>
                 </div>
             </div>
             <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm h-96 flex flex-col">
                 <h3 className="text-lg font-bold text-[#1f2937] mb-4">Uplift by Category</h3>
                 <div className="flex-1 min-h-0 relative">
-                    <canvas ref={categoryChartRef}></canvas>
+                    <ChartContainer
+                      config={{
+                        total_demand: { label: 'Demand', color: '#E8651A' },
+                      }}
+                      className="h-full w-full aspect-auto"
+                    >
+                      <BarChart data={categoryBreakdown} layout="vertical" margin={{ left: 8, right: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" tickLine={false} axisLine={false} />
+                        <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} width={120} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="total_demand" radius={[0, 8, 8, 0]}>
+                          {categoryBreakdown.map((entry: any, index: number) => (
+                            <Cell
+                              key={`cell-${entry.category}-${index}`}
+                              fill={['#E8651A', '#1B2A4A', '#3B82F6', '#22C55E', '#F59E0B'][index % 5]}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ChartContainer>
                 </div>
             </div>
         </div>
