@@ -20,6 +20,7 @@ import {
   getForecastingSnapshot,
   getForecastJob,
   getOutlets,
+  getProducts,
   requestForecastGeneration,
 } from '../../lib/forecastingData';
 import { getStoredAdminLocation } from '../../lib/adminLocation';
@@ -32,7 +33,9 @@ import {
 export default function AIForecasting() {
   const adminLocation = getStoredAdminLocation();
   const [outlets, setOutlets] = useState<{id: number, name: string}[]>([]);
-  const [currentOutletId, setCurrentOutletId] = useState<number | null>(adminLocation.outletId);
+const [currentOutletId, setCurrentOutletId] = useState<number | null>(adminLocation.outletId);
+const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+const [availableProducts, setAvailableProducts] = useState<{id: number, name: string}[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [trajectoryData, setTrajectoryData] = useState<any[]>([]);
@@ -50,27 +53,31 @@ export default function AIForecasting() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadOutlets = async () => {
+    const loadInitialData = async () => {
       try {
         setConnectionError(null);
-        const data = await getOutlets();
+        const [outletData, productData] = await Promise.all([
+          getOutlets(),
+          getProducts(),
+        ]);
         if (cancelled) return;
-        setOutlets(data);
-        setCurrentOutletId((current) => {
-          if (current) return current;
-          const preferredOutlet = data.find((outlet) => outlet.id === adminLocation.outletId);
-          return preferredOutlet?.id ?? data[0]?.id ?? null;
-        });
+setOutlets(outletData);
+setCurrentOutletId((current) => {
+  if (current) return current;
+  const preferredOutlet = outletData.find((outlet) => outlet.id === adminLocation.outletId);
+  return preferredOutlet?.id ?? outletData[0]?.id ?? null;
+});
+setAvailableProducts(productData.map(p => ({ id: p.id, name: p.name })));
       } catch (e) {
         if (cancelled) return;
-        console.error('Error fetching outlets', e);
+        console.error('Error fetching initial data', e);
         setConnectionError(
           '⚠️ Unable to load forecasting data. Check Supabase or the legacy API configuration.',
         );
       }
     };
 
-    loadOutlets();
+    loadInitialData();
     const timer = setTimeout(() => setIsAnalyzing(false), 1800);
     return () => {
       cancelled = true;
@@ -85,12 +92,16 @@ export default function AIForecasting() {
 
     const loadSnapshot = async () => {
       try {
-        const snapshot = await getForecastingSnapshot(currentOutletId);
+        const snapshot = await getForecastingSnapshot(
+          currentOutletId, 
+          selectedProductId || undefined
+        );
         if (cancelled) return;
         setSummary(snapshot.summary);
         setAlerts(snapshot.alerts);
         setTrajectoryData(snapshot.trajectoryData);
         setCategoryBreakdown(snapshot.categoryBreakdown);
+        
         setConnectionError(null);
       } catch (e) {
         if (cancelled) return;
@@ -106,7 +117,7 @@ export default function AIForecasting() {
     return () => {
       cancelled = true;
     };
-  }, [currentOutletId]);
+  }, [currentOutletId, selectedProductId]);
 
   useEffect(() => {
     return () => {
@@ -222,7 +233,7 @@ export default function AIForecasting() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f4ea] flex-1 relative font-sans p-8">
+    <div className="min-h-screen bg-[#f9f4ea] flex-1 relative font-sans px-10 py-10">
       {/* AI Analysis Initial Overlay */}
       {isAnalyzing && (
         <div className="fixed inset-0 z-50 bg-[#f9f4ea] flex flex-col items-center justify-center transition-opacity duration-700">
@@ -232,10 +243,10 @@ export default function AIForecasting() {
         </div>
       )}
 
-      <div className={`max-w-[1400px] mx-auto transition-all duration-700 ${isAnalyzing ? 'opacity-0 scale-98 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}`}>
+      <div className={`max-w-[1600px] mx-auto transition-all duration-700 ${isAnalyzing ? 'opacity-0 scale-98 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}`}>
         
         {/* Top Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-3xl font-bold text-[#1B2A4A] tracking-tight">AI Demand Forecasting Module</h1>
             <p className="text-gray-600 mt-1">Generate dynamic ordering plans based on ML pattern analysis</p>
@@ -269,7 +280,7 @@ export default function AIForecasting() {
         </div>
 
         {/* Action Banner */}
-        <div className="bg-[#ff6900] rounded-[28px] p-8 shadow-[0px_18px_42px_0px_rgba(201,101,15,0.15)] mb-8 flex justify-between items-center bg-gradient-to-r from-[#ff6900] to-[#ff8534]">
+        <div className="bg-[#ff6900] rounded-[28px] p-10 shadow-[0px_18px_42px_0px_rgba(201,101,15,0.15)] mb-10 flex justify-between items-center bg-gradient-to-r from-[#ff6900] to-[#ff8534]">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <h2 className="text-white text-3xl font-extrabold tracking-tight">Demand Intelligence</h2>
@@ -305,7 +316,7 @@ export default function AIForecasting() {
         </div>
 
         {isGenerating && (
-            <div className="w-full mb-8">
+            <div className="w-full mb-10">
                 <div className="h-3 w-full bg-white rounded-full overflow-hidden shadow-inner">
                     <div className="h-full bg-green-500 transition-all duration-300" style={{width: `${generateProgress}%`}}></div>
                 </div>
@@ -314,7 +325,7 @@ export default function AIForecasting() {
         )}
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
             <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
                 <p className="text-gray-500 font-medium text-sm mb-2">Predicted Units (30 Days)</p>
                 <p className="text-3xl font-extrabold text-[#1B2A4A]">{summary?.total_forecast_30d?.toLocaleString() || '—'}</p>
@@ -330,7 +341,7 @@ export default function AIForecasting() {
             </div>
             <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
                 <p className="text-gray-500 font-medium text-sm mb-2">Products Processed</p>
-                <p className="text-3xl font-extrabold text-gray-900">{summary?.total_products || '20'}</p>
+                <p className="text-3xl font-extrabold text-gray-900">{summary?.total_products || '6'}</p>
                 <p className="text-sm text-gray-400 mt-1">Analyzed by ML models</p>
             </div>
             <div className="bg-[#1B2A4A] rounded-xl border border-[#1B2A4A] p-6 shadow-lg text-white relative">
@@ -344,10 +355,26 @@ export default function AIForecasting() {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-6 shadow-sm h-96">
-                <h3 className="text-lg font-bold text-[#1f2937] mb-4">Historical vs Forecasted Trajectory</h3>
-                <div className="relative h-72 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-8 shadow-sm h-[520px]">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-[#1f2937]">
+                        {selectedProductId 
+                            ? `${availableProducts.find(p => p.id === selectedProductId)?.name || 'Product'} Forecast` 
+                            : 'Overall Portfolio Forecast'}
+                    </h3>
+                    <select
+                      value={selectedProductId || ''}
+                      onChange={e => setSelectedProductId(e.target.value ? Number(e.target.value) : null)}
+                      className="px-3 py-2 border-2 border-[#ff6900] rounded-lg text-sm font-semibold text-[#ff6900] bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer"
+                    >
+                      <option value="">📊 All Products</option>
+                      {availableProducts.map((p: any) => (
+                        <option key={p.id} value={p.id}>📦 {p.name}</option>
+                      ))}
+                    </select>
+                </div>
+                <div className="relative h-[380px] w-full">
                     <ChartContainer
                       config={{
                         historical: { label: 'Historical', color: '#1B2A4A' },
@@ -371,36 +398,53 @@ export default function AIForecasting() {
                     </ChartContainer>
                 </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm h-96 flex flex-col">
-                <h3 className="text-lg font-bold text-[#1f2937] mb-4">Uplift by Category</h3>
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm h-[520px] flex flex-col">
+                <h3 className="text-lg font-bold text-[#1f2937] mb-2">Stock vs Forecast (30d)</h3>
+                <p className="text-xs text-gray-400 mb-6">Current inventory compared to predicted 30-day demand per product</p>
                 <div className="flex-1 min-h-0 relative">
-                    <ChartContainer
-                      config={{
-                        total_demand: { label: 'Demand', color: '#E8651A' },
-                      }}
-                      className="h-full w-full aspect-auto"
-                    >
-                      <BarChart data={categoryBreakdown} layout="vertical" margin={{ left: 8, right: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tickLine={false} axisLine={false} />
-                        <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} width={120} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="total_demand" radius={[0, 8, 8, 0]}>
-                          {categoryBreakdown.map((entry: any, index: number) => (
-                            <Cell
-                              key={`cell-${entry.category}-${index}`}
-                              fill={['#E8651A', '#1B2A4A', '#3B82F6', '#22C55E', '#F59E0B'][index % 5]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ChartContainer>
+                    {alerts.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                        <Package className="w-12 h-12 mb-3 opacity-30" />
+                        <p className="font-semibold text-sm">Generate a forecast to see comparison</p>
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col justify-center gap-4">
+                        {alerts.slice(0, 6).map((a: any) => {
+                          const maxVal = Math.max(a.current_stock, a.total_forecast_30d);
+                          const stockPct = maxVal > 0 ? (a.current_stock / maxVal) * 100 : 0;
+                          const forecastPct = maxVal > 0 ? (a.total_forecast_30d / maxVal) * 100 : 0;
+                          const isShortfall = a.total_forecast_30d > a.current_stock;
+                          return (
+                            <div key={a.id} className="flex items-center gap-3">
+                              <p className="text-xs font-bold text-gray-600 w-28 truncate text-right" title={a.name}>
+                                {a.name.replace(/\s*\(.*?\)\s*/g, '')}
+                              </p>
+                              <div className="flex-1 flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-4 rounded-r-md bg-[#1B2A4A] transition-all duration-500" style={{ width: `${stockPct}%`, minWidth: '4px' }} />
+                                  <span className="text-[10px] font-bold text-gray-500">{a.current_stock.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-4 rounded-r-md transition-all duration-500 ${isShortfall ? 'bg-[#ef4444]' : 'bg-[#ff6900]'}`} style={{ width: `${forecastPct}%`, minWidth: '4px' }} />
+                                  <span className={`text-[10px] font-bold ${isShortfall ? 'text-red-500' : 'text-orange-500'}`}>{a.total_forecast_30d.toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center gap-6 mt-2 justify-center">
+                          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#1B2A4A]" /><span className="text-[10px] font-bold text-gray-500">Current Stock</span></div>
+                          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#ff6900]" /><span className="text-[10px] font-bold text-gray-500">Forecast (30d)</span></div>
+                          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#ef4444]" /><span className="text-[10px] font-bold text-gray-500">Shortfall Risk</span></div>
+                        </div>
+                      </div>
+                    )}
                 </div>
             </div>
         </div>
 
         {/* Priority Restock Alerts */}
-        <div className="bg-white rounded-xl border border-gray-100 p-0 shadow-sm overflow-hidden mb-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-0 shadow-sm overflow-hidden mb-10">
             <div className="p-6 border-b border-gray-100 bg-[#f9fafb]">
                 <h3 className="text-lg font-bold text-[#1f2937]">Urgent Procurement Recommendations</h3>
                 <p className="text-sm text-gray-500 mt-1">Items where 30-day forecast significantly exceeds current on-hand inventory</p>
