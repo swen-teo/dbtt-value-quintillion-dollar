@@ -15,7 +15,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Deals from "./pages/Deals";
 import AutoPay from "./pages/AutoPay";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import AdminLogin from "./pages/admin/AdminLogin";
+
 import Dashboard from "./pages/admin/Dashboard";
 import OrderManagement from "./pages/admin/OrderManagement";
 import PickupScheduling from "./pages/admin/PickupScheduling";
@@ -58,7 +58,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin/login",
-    Component: AdminLogin,
+    Component: Login,
   },
   {
     path: "/admin",

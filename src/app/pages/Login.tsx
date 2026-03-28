@@ -45,8 +45,10 @@ export default function Login() {
       
       window.dispatchEvent(new Event('accountTypeChanged'));
       navigate('/customer/shop');
+    } else if (email === 'admin@valus.com' && password === 'admin123') {
+      navigate('/admin/dashboard');
     } else {
-      alert('Invalid credentials. Access is currently limited to the Demo Account: demo@mamashop.com / demo123');
+      alert('Invalid credentials. Access is currently limited to Demo Accounts.');
     }
   };
 
@@ -120,15 +122,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Admin Link */}
-          <div className="mt-6 pt-6 border-t-2 border-gray-200 text-center">
-            <button
-              onClick={() => navigate('/admin/login')}
-              className="text-lg font-bold text-gray-700 hover:text-[#ff6900] transition-colors underline decoration-2 underline-offset-4"
-            >
-              Admin Portal →
-            </button>
-          </div>
+          {/* Admin Link removed as it's unified under normal login */}
         </div>
 
         {/* New Member Link */}
@@ -151,10 +145,22 @@ export default function Login() {
         {/* Demo Credentials */}
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-4">
           <p className="text-xs font-semibold text-blue-900 mb-2 uppercase tracking-wide">Demo Access</p>
-          <p className="text-xs text-blue-700">
-            <span className="font-semibold">Email:</span> demo@mamashop.com<br />
-            <span className="font-semibold">Password:</span> demo123
-          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-semibold text-blue-800 mb-1">Customer</p>
+              <p className="text-xs text-blue-700">
+                <span className="font-semibold">Email:</span> demo@mamashop.com<br />
+                <span className="font-semibold">Password:</span> demo123
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-blue-800 mb-1">Admin</p>
+              <p className="text-xs text-blue-700">
+                <span className="font-semibold">Email:</span> admin@valus.com<br />
+                <span className="font-semibold">Password:</span> admin123
+              </p>
+            </div>
+          </div>
         </div>
 
       </div>
