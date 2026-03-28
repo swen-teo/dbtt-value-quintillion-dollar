@@ -24,21 +24,31 @@ export function useProducts() {
         
         if (data && data.length > 0) {
           // Map to match frontend interface
-          const mappedProducts: Product[] = data.map(dbItem => ({
-            id: dbItem.mock_id || dbItem.id, // using mock_id to keep existing relations working for now
-            name: dbItem.name,
-            category: dbItem.category as any,
-            image: dbItem.image,
-            cashPrice: Number(dbItem.cash_price),
-            bnplPrice: Number(dbItem.bnpl_price),
-            retailPrice: Number(dbItem.retail_price),
-            savings: Number(dbItem.savings),
-            savingsPercent: dbItem.savings_percent,
-            unit: dbItem.unit,
-            stock: dbItem.stock,
-            description: dbItem.description,
-            dbId: dbItem.id
-          }));
+          const mappedProducts: Product[] = data.map(dbItem => {
+            let image = dbItem.image;
+            // If the image is a relative path (doesn't start with http), prepend Supabase storage URL
+            if (image && !image.startsWith('http')) {
+              const bucket = 'product-images'; // Assuming 'product-images' bucket
+              const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+              image = `${baseUrl}/storage/v1/object/public/${bucket}/${image}`;
+            }
+            
+            return {
+              id: dbItem.mock_id || dbItem.id, // using mock_id to keep existing relations working for now
+              name: dbItem.name,
+              category: dbItem.category as any,
+              image: image,
+              cashPrice: Number(dbItem.cash_price),
+              bnplPrice: Number(dbItem.bnpl_price),
+              retailPrice: Number(dbItem.retail_price),
+              savings: Number(dbItem.savings),
+              savingsPercent: dbItem.savings_percent,
+              unit: dbItem.unit,
+              stock: dbItem.stock,
+              description: dbItem.description,
+              dbId: dbItem.id
+            };
+          });
           setProducts(mappedProducts);
         } else {
           setProducts(mockProducts);
