@@ -14,16 +14,25 @@ import {
   UserCircle,
   ShieldCheck,
   ChevronRight,
-  Download
+  Download,
+  Search,
+  Store
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function LogisticsHubCollections() {
   const [userRole, setUserRole] = useState<'normalShop' | 'hubShop'>('normalShop');
-  const [activeTab, setActiveTab] = useState<'central' | 'hub'>('central');
+  const [activeTab, setActiveTab] = useState<'request' | 'hub'>('request');
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // New Request Form State
+  const [requestForm, setRequestForm] = useState({
+    hub: 'Bedok Central Hub',
+    item: '',
+    quantity: ''
+  });
 
   // Simulation effect for Supabase role check
   useEffect(() => {
@@ -47,19 +56,17 @@ export default function LogisticsHubCollections() {
     checkProfile();
   }, []);
 
-  // Mock Shop Restock Data (Hub Portal)
-  const shopRestocks = [
-    { id: 'S-701', shop: 'Bedok North Depot', zone: 'East', priority: 'high', units: 450, stockLevel: 12 },
-    { id: 'S-702', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, stockLevel: 35 },
-    { id: 'S-703', shop: 'AMK Central Shop', zone: 'North', priority: 'high', units: 580, stockLevel: 8 },
-    { id: 'S-704', shop: 'Tampines Hub Store', zone: 'East', priority: 'low', units: 120, stockLevel: 62 },
-    { id: 'S-705', shop: 'Woodlands Mart', zone: 'North', priority: 'medium', units: 310, stockLevel: 28 },
-    { id: 'S-706', shop: 'Clementi Mall #02', zone: 'West', priority: 'high', units: 440, stockLevel: 15 },
+  // Mock Shop Restock Data (For Hub Portal management)
+  const incomingRequests = [
+    { id: 'REQ-101', shop: 'Mama Shop #493', zone: 'East', priority: 'high', units: 450, time: '2h ago' },
+    { id: 'REQ-102', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, time: '4h ago' },
+    { id: 'REQ-103', shop: 'AMK Central', zone: 'North', priority: 'high', units: 580, time: '5h ago' },
+    { id: 'REQ-104', shop: 'Tampines Hub', zone: 'East', priority: 'low', units: 120, time: '6h ago' },
   ];
 
-  const filteredRestocks = selectedZone 
-    ? shopRestocks.filter(s => s.zone === selectedZone)
-    : shopRestocks;
+  const filteredRequests = selectedZone 
+    ? incomingRequests.filter(s => s.zone === selectedZone)
+    : incomingRequests;
 
   const handleAction = (id: string) => {
     setProcessingStatus(prev => ({ ...prev, [id]: 'loading' }));
@@ -69,19 +76,19 @@ export default function LogisticsHubCollections() {
   };
 
   const handleBatchApprove = () => {
-    const toApprove = filteredRestocks.filter(s => !processingStatus[s.id]);
+    const toApprove = filteredRequests.filter(s => !processingStatus[s.id]);
     toApprove.forEach(s => handleAction(s.id));
   };
 
   const handleDownloadManifest = () => {
     setIsDownloading(true);
     setTimeout(() => {
-      const content = "MANIFEST ID: HUB-29001\nROUTE: NORTH-EAST DISTRIBUTION\nUNITS: 1240\nDATE: 2026-03-28\nSTATUS: VERIFIED";
+      const content = "DISPATCH MANIFEST\nLOGISTICS HUB: BEDOK CENTRAL\nDATE: 2026-03-28\nTOTAL REQ: 4\nSTATUS: VERIFIED";
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'dispatch-manifest.pdf'; // Simplified PDF sim
+      a.download = 'hub-dispatch-manifest.pdf';
       a.click();
       URL.revokeObjectURL(url);
       setIsDownloading(false);
@@ -89,25 +96,25 @@ export default function LogisticsHubCollections() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f6]/90 p-6">
+    <div className="min-h-screen bg-[#faf9f6]/95 p-6 space-y-8">
       {/* Simulation Header / Auth Bar */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="font-black text-2xl text-slate-900 tracking-tighter flex items-center gap-2">
-            <Warehouse className="w-7 h-7 text-[#ff6900]" />
-            Logistics Command Center
+            <Navigation className="w-7 h-7 text-[#ff6900]" />
+            Logistics Command
           </h1>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-0.5">Central Hub Operations Hub</p>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-0.5">Supply Chain Orchestration Hub</p>
         </div>
 
         {/* Profile Simulation Switcher */}
         <div className="flex items-center gap-3 bg-white p-1 rounded-[14px] border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 px-3 py-1.5 text-slate-400 border-r border-slate-100">
             <UserCircle className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Profile Switcher</span>
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Profile</span>
           </div>
           <button
-            onClick={() => { setUserRole('normalShop'); setActiveTab('central'); }}
+            onClick={() => { setUserRole('normalShop'); setActiveTab('request'); }}
             className={`px-4 h-8 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
               userRole === 'normalShop' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-slate-600'
             }`}
@@ -117,7 +124,7 @@ export default function LogisticsHubCollections() {
           <button
             onClick={() => setUserRole('hubShop')}
             className={`px-4 h-8 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
-              userRole === 'hubShop' ? 'bg-[#ff6900] text-white' : 'text-slate-400 hover:text-orange-600'
+              userRole === 'hubShop' ? 'bg-[#ff6900] text-white font-black' : 'text-slate-400 hover:text-[#ff6900]'
             }`}
           >
             Hub Store
@@ -126,24 +133,24 @@ export default function LogisticsHubCollections() {
       </div>
 
       {/* Main Tab Switcher */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex bg-white p-1 rounded-[14px] border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="flex bg-white p-1 rounded-[15px] border border-slate-200 shadow-sm">
           <button
-            onClick={() => setActiveTab('central')}
-            className={`flex items-center gap-2 px-6 h-9 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
-              activeTab === 'central' ? 'bg-slate-100 text-slate-900 border border-slate-200 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+            onClick={() => setActiveTab('request')}
+            className={`flex items-center gap-2 px-6 h-9 rounded-[11px] font-black text-[9px] uppercase tracking-widest transition-all ${
+              activeTab === 'request' ? 'bg-slate-100 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Warehouse className="w-4 h-4" />
-            Central Hub
+            <Plus className="w-4 h-4" />
+            Request Restock
           </button>
           
-          {/* Conditional Hub Portal Tab - Completely hidden for non-hub roles */}
+          {/* Conditional Hub Portal Tab - Only visible to hubShop role */}
           {userRole === 'hubShop' && (
             <button
               onClick={() => setActiveTab('hub')}
-              className={`flex items-center gap-2 px-6 h-9 rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all ${
-                activeTab === 'hub' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'text-slate-400 hover:text-[#ff6900]'
+              className={`flex items-center gap-2 px-6 h-9 rounded-[11px] font-black text-[9px] uppercase tracking-widest transition-all ${
+                activeTab === 'hub' ? 'bg-orange-50 text-[#ff6900] shadow-sm' : 'text-slate-400 hover:text-[#ff6900]'
               }`}
             >
               <Navigation className="w-4 h-4" />
@@ -155,86 +162,167 @@ export default function LogisticsHubCollections() {
         {userRole !== 'hubShop' && (
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-100/50 rounded-[12px] border border-slate-200/50">
             <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest italic leading-none">Hub Shop Restricted</p>
+            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest italic leading-none">Hub Restricted</p>
           </div>
         )}
       </div>
 
-      {activeTab === 'central' || userRole !== 'hubShop' ? (
-        /* Central Hub View (Pioneer Road HQ) */
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 animate-in fade-in duration-500">
+      {activeTab === 'request' || userRole !== 'hubShop' ? (
+        /* Request Restock View (Normal Shop Perspective) */
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 animate-in fade-in duration-500">
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm overflow-hidden relative">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="font-black text-xl text-slate-900 tracking-tight">Pick & Pack Queue</h2>
-                  <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mt-1">Pioneer Road HQ • Central Hub</p>
-                </div>
-                <button className="h-9 px-5 bg-slate-50 border border-slate-200 text-slate-900 rounded-[10px] font-black text-[9px] uppercase tracking-widest hover:bg-white hover:shadow-sm transition-all focus:ring-2 focus:ring-[#ff6900]/20 outline-none">
-                  Refresh Data
-                </button>
+            <div className="bg-white border border-slate-200 rounded-[28px] p-8 shadow-sm">
+              <div className="mb-10">
+                <h2 className="font-black text-2xl text-slate-900 tracking-tight flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <Package className="w-5 h-5 text-slate-400" />
+                  </div>
+                  Post New Restock Request
+                </h2>
+                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Inventory Replenishment from Hub Store</p>
               </div>
 
-              <div className="space-y-3">
-                {[
-                  { id: 'HUB-29001', route: 'Regional - North Zone', items: 1240, status: 'Ready' },
-                  { id: 'HUB-29002', route: 'Direct - Valu$ AMK Hub', items: 820, status: 'Picking' },
-                  { id: 'HUB-29003', route: 'Regional - West Zone', items: 1560, status: 'Ready' },
-                  { id: 'HUB-29004', route: 'Direct - Bedok Central', items: 430, status: 'Ready' },
-                ].map((order) => (
-                  <div key={order.id} className="group bg-slate-50 border border-slate-100 rounded-[16px] p-5 hover:border-[#ff6900] transition-all">
-                    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-6">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                          <Package className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-slate-900 text-sm truncate uppercase tracking-tight">Bulk Manifest #{order.id}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{order.route} • {order.items} Units</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-1 rounded-[6px] font-black text-[9px] uppercase tracking-[0.1em] ${
-                          order.status === 'Picking' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'bg-white text-slate-400 border border-slate-200'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <button className="h-9 px-5 bg-white border border-slate-200 text-slate-900 rounded-[10px] font-black text-[9px] uppercase tracking-widest hover:border-[#ff6900] hover:text-[#ff6900] transition-all flex items-center gap-2 active:scale-95">
-                        Start
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              {/* Restock Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Select Nearest Hub</label>
+                  <select 
+                    value={requestForm.hub}
+                    onChange={(e) => setRequestForm({...requestForm, hub: e.target.value})}
+                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
+                  >
+                    <option>Bedok Central Hub (East)</option>
+                    <option>Jurong West Hub (West)</option>
+                    <option>Woodlands Central (North)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Search SKU</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      placeholder="Product name or code..."
+                      className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
+                    />
                   </div>
-                ))}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Quantity Requested</label>
+                  <input 
+                    type="number"
+                    placeholder="E.g. 500 units"
+                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button className="w-full h-11 bg-slate-900 text-white rounded-[12px] font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                    Submit Request to Hub
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
+            </div>
+
+            {/* Recent Orders List for the Shop */}
+            <div className="bg-white border border-slate-200 rounded-[28px] overflow-hidden shadow-sm">
+               <div className="p-8 border-b border-slate-50">
+                  <h3 className="font-black text-lg text-slate-900 tracking-tight">Active Request Status</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Real-time Fulfillment Tracking</p>
+               </div>
+               <div className="divide-y divide-slate-100">
+                  {[
+                    { id: 'ORD-921', item: 'Thai Fragrant Rice 5kg', qty: 240, status: 'In Transit', date: 'Today' },
+                    { id: 'ORD-920', item: 'Cooking Oil Premium 2L', qty: 150, status: 'Confirmed', date: 'Yesterday' },
+                  ].map((order) => (
+                    <div key={order.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-all">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[#ff6900]">
+                            <Truck className="w-5 h-5" />
+                         </div>
+                         <div>
+                            <p className="font-bold text-slate-900 text-sm">{order.item}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.id} • {order.qty} Units</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <span className={`px-2.5 py-1 rounded-[6px] font-black text-[9px] uppercase tracking-widest ${
+                            order.status === 'In Transit' ? 'bg-orange-50 text-[#ff6900] border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                         }`}>
+                           {order.status}
+                         </span>
+                         <p className="text-[9px] text-slate-400 font-bold mt-1.5 uppercase italic">{order.date}</p>
+                      </div>
+                    </div>
+                  ))}
+               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-slate-900 rounded-[24px] p-7 text-white shadow-xl">
-              <h3 className="font-black text-[10px] uppercase tracking-widest mb-6 flex items-center gap-2 text-white/40">
-                <ClipboardList className="w-4 h-4 text-[#ff6900]" />
-                Logistics Assets
-              </h3>
-              <div className="space-y-3">
-                {['Tampines Distribution', 'North Regional HQ', 'Jurong West Hub'].map((loc, idx) => (
-                  <div key={idx} className="bg-white/5 border border-white/10 p-4 rounded-[14px] hover:bg-white/10 transition-all cursor-pointer flex items-center justify-between group">
-                    <div>
-                      <p className="font-bold text-sm tracking-tight">{loc}</p>
-                      <p className="text-[8px] font-black uppercase text-white/20 tracking-widest mt-1">Status: Confirmed</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            <div className="bg-[#1b1b1e] rounded-[28px] p-8 text-white shadow-xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 -translate-x-8 -translate-y-8 rounded-full blur-2xl group-hover:bg-[#ff6900]/10 transition-all duration-700"></div>
+               <Store className="w-8 h-8 text-[#ff6900] mb-6" />
+               <h3 className="font-black text-xl tracking-tight mb-2">Shop Profile</h3>
+               <p className="text-white/40 text-xs font-medium leading-relaxed mb-6 italic">Shop #493 is currently assigned to the Bedok Regional Logistics Hub for all restock request fulfillments.</p>
+               <div className="space-y-4 pt-6 border-t border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Linked Hub</span>
+                    <span className="text-xs font-bold font-mono">BEDOK-HQ-7</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Active Tickets</span>
+                    <span className="text-xs font-bold text-[#ff6900]">2 Active</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Hub Portal View (Hub Management Perspective) - Aggregates Requests from all Shops */
+        <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-8 animate-in fade-in duration-500">
+          
+          <div className="space-y-6">
+            <div className="bg-white border border-slate-200 rounded-[28px] p-8 shadow-sm">
+              <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                <MapIcon className="w-3.5 h-3.5" />
+                Regional Supply Network
+              </h3>
+              
+              <div className="relative aspect-square bg-slate-50 border border-slate-100 rounded-[24px] overflow-hidden p-6 grid grid-cols-2 gap-4">
+                {[
+                   { id: 'North', count: 12 },
+                   { id: 'East', count: 8 },
+                   { id: 'West', count: 18 },
+                   { id: 'Central', count: 24 }
+                ].map(zone => (
+                  <button
+                    key={zone.id}
+                    onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
+                    className={`relative p-4 rounded-[20px] transition-all flex flex-col items-center justify-center gap-1 border-2 ${
+                      selectedZone === zone.id 
+                        ? 'bg-[#ff6900]/10 border-[#ff6900] shadow-sm' 
+                        : 'bg-white border-transparent hover:border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <p className={`text-[10px] font-black uppercase tracking-wider ${selectedZone === zone.id ? 'text-[#ff6900]' : 'text-slate-300'}`}>
+                      {zone.id}
+                    </p>
+                    <p className="text-2xl font-black text-slate-900">{zone.count}</p>
+                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none">Registered Stores</p>
+                  </button>
                 ))}
+                
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-[#ff6900] rounded-full border-2 border-white z-20 shadow-[0_0_20px_rgba(255,105,0,0.5)]"></div>
               </div>
+
+              {/* PDF Manifest Moved Here - Only accessible to Hub Manager */}
               <button 
                 onClick={handleDownloadManifest}
                 disabled={isDownloading}
-                className="w-full mt-6 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[12px] font-black text-[9px] uppercase tracking-widest text-white/80 transition-all flex items-center justify-center gap-2"
+                className="w-full mt-8 h-12 bg-slate-900 text-white rounded-[14px] font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 disabled:opacity-50"
               >
                 {isDownloading ? (
-                  'Generating PDF...'
+                  'Syncing Data...'
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5" />
@@ -244,120 +332,70 @@ export default function LogisticsHubCollections() {
               </button>
             </div>
           </div>
-        </div>
-      ) : (
-        /* Hub Portal View (Shop Management) - ONLY VISIBLE IF userRole === 'hubShop' */
-        <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6 animate-in fade-in duration-500">
-          
-          {/* Interactive Regional Map Visual */}
-          <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[24px] p-7 shadow-sm">
-              <h3 className="font-black text-[9px] uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-                <MapIcon className="w-3.5 h-3.5" />
-                Regional Distribution
-              </h3>
-              
-              <div className="relative aspect-square bg-slate-50 border border-slate-100 rounded-[20px] overflow-hidden p-5 grid grid-cols-2 gap-3 pb-8">
-                {[
-                   { id: 'North', count: 12 },
-                   { id: 'East', count: 8 },
-                   { id: 'West', count: 15 },
-                   { id: 'Central', count: 22 }
-                ].map(zone => (
-                  <button
-                    key={zone.id}
-                    onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
-                    className={`relative p-3 rounded-[16px] transition-all flex flex-col items-center justify-center gap-1 border-2 ${
-                      selectedZone === zone.id 
-                        ? 'bg-[#ff6900]/10 border-[#ff6900]' 
-                        : 'bg-white border-transparent hover:border-slate-200'
-                    }`}
-                  >
-                    <p className={`text-[9px] font-black uppercase tracking-wider ${selectedZone === zone.id ? 'text-[#ff6900]' : 'text-slate-300'}`}>
-                      {zone.id}
-                    </p>
-                    <p className="text-xl font-black text-slate-900">{zone.count}</p>
-                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Active Shops</p>
-                  </button>
-                ))}
-                
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-[#ff6900] rounded-full border-2 border-white z-20"></div>
-              </div>
-
-              <div className="mt-6">
-                <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-[16px] flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-[#ff6900]" />
-                  <p className="text-[9px] text-slate-500 font-bold leading-tight uppercase tracking-wide">
-                    Priority Alert: 8 depots require inventory synchronization.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
-              <div className="p-7 border-b border-slate-50 flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-[28px] overflow-hidden shadow-sm">
+              <div className="p-8 border-b border-slate-50 flex items-center justify-between">
                 <div>
-                  <h2 className="font-black text-xl text-slate-900 tracking-tight leading-none uppercase">
-                    {selectedZone ? `${selectedZone} Zone Restocks` : 'Hub Portal Requests'}
+                  <h2 className="font-black text-2xl text-slate-900 tracking-tight leading-none">
+                    {selectedZone ? `${selectedZone} Zone Requests` : 'Incoming Hub Orders'}
                   </h2>
-                  <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mt-2 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    Regional System Synced
+                  <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2 flex items-center gap-1.5 leading-none">
+                    <Activity className="w-3 h-3 text-emerald-500" />
+                    Centralized Supply Chain Feed
                   </p>
                 </div>
                 <button
                   onClick={handleBatchApprove}
-                  disabled={filteredRestocks.every(s => processingStatus[s.id])}
-                  className="h-9 px-6 bg-slate-900 text-white rounded-[10px] font-black text-[9px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                  disabled={filteredRequests.every(s => processingStatus[s.id])}
+                  className="h-10 px-6 bg-[#ff6900] text-white rounded-[12px] font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md active:scale-95 disabled:opacity-50"
                 >
-                  Approve Zone
+                  Approve All Zone
                 </button>
               </div>
 
               <div className="overflow-hidden">
                 <div className="bg-slate-50/50 px-8 py-3 grid grid-cols-[1fr_100px_100px_120px] gap-4">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Depot ID / Shop</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Inventory</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Requested</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right pr-1">Action</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Origin Shop / Depot</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Zone</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Required</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-2">Action</p>
                 </div>
 
                 <div className="divide-y divide-slate-100">
-                  {filteredRestocks.map((shop) => (
-                    <div key={shop.id} className="px-8 py-4 hover:bg-slate-50/50 transition-all group grid grid-cols-[1fr_100px_100px_120px] gap-4 items-center">
+                  {filteredRequests.map((shop) => (
+                    <div key={shop.id} className="px-8 py-5 hover:bg-slate-50/50 transition-all group grid grid-cols-[1fr_100px_100px_120px] gap-4 items-center">
                       <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[#ff6900] shadow-sm flex-shrink-0 group-hover:bg-orange-50 transition-colors">
-                          <Truck className="w-4 h-4 opacity-70" />
+                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-[#ff6900] shadow-sm flex-shrink-0 group-hover:bg-orange-50 transition-colors">
+                          <Truck className="w-5 h-5 opacity-70" />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-800 text-[13px] truncate">{shop.shop}</p>
-                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest font-mono">{shop.id} • {shop.zone}</span>
+                          <p className="font-bold text-slate-900 text-sm truncate">{shop.shop}</p>
+                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest font-mono italic">{shop.id} • {shop.time}</span>
                         </div>
                       </div>
 
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${shop.stockLevel < 20 ? 'bg-rose-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                          <p className={`font-black text-[13px] ${shop.stockLevel < 20 ? 'text-rose-600' : 'text-slate-900'}`}>{shop.stockLevel}%</p>
+                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                           <p className="font-black text-[13px] text-slate-900">{shop.zone}</p>
                         </div>
-                        <p className="text-[8px] font-black uppercase text-slate-300 tracking-widest">Current Health</p>
+                        <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Sector</p>
                       </div>
 
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <Plus className="w-3 h-3 text-[#ff6900]" />
-                          <p className="font-black text-[13px] text-slate-900">{shop.units}</p>
+                           <Plus className="w-3 h-3 text-[#ff6900]" />
+                           <p className="font-black text-[13px] text-slate-900">{shop.units}</p>
                         </div>
-                        <p className="text-[8px] font-black uppercase text-slate-300 tracking-widest">Proposed Restock</p>
+                        <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Units</p>
                       </div>
 
-                      <div className="flex justify-end">
+                      <div className="flex justify-end pr-1">
                         <button
                           onClick={() => handleAction(shop.id)}
                           disabled={!!processingStatus[shop.id]}
-                          className={`h-8 w-full rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 ${
+                          className={`h-9 w-full rounded-[10px] font-black text-[9px] uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 ${
                             processingStatus[shop.id] === 'done'
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                               : processingStatus[shop.id] === 'loading'
@@ -366,10 +404,10 @@ export default function LogisticsHubCollections() {
                           }`}
                         >
                           {processingStatus[shop.id] === 'done' ? (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <CheckCircle2 className="w-4 h-4" />
                           ) : (
                             <>
-                              {processingStatus[shop.id] === 'loading' ? '...' : 'Approve'}
+                              {processingStatus[shop.id] === 'loading' ? '...' : 'Fulfill'}
                               <ArrowRight className="w-3 h-3" />
                             </>
                           )}
