@@ -1,8 +1,9 @@
 """
 seed_supabase.py - Populate Supabase forecasting tables with sample data.
 
-This mirrors the old MySQL seeding flow, but writes into Supabase tables
-so the separate Python training worker can use the same historical data.
+Syncs the 6 LIVE storefront products from Supabase `products` into 
+the `forecast_products` and `forecast_categories` tables, then 
+generates 1 year of historical orders.
 """
 
 from __future__ import annotations
@@ -10,19 +11,7 @@ from __future__ import annotations
 import random
 from datetime import datetime, timedelta
 
-from supabase_store import delete_rows, insert_rows
-
-
-CATEGORIES = [
-    (1, "Rice & Grains"),
-    (2, "Cooking Essentials"),
-    (3, "Instant Noodles & Pasta"),
-    (4, "Canned Goods"),
-    (5, "Beverages"),
-    (6, "Snacks & Confectionery"),
-    (7, "Cleaning & Household"),
-    (8, "Personal Care"),
-]
+from supabase_store import delete_rows, insert_rows, select_rows
 
 OUTLETS = [
     (1, "Valu$ Jurong East", 1.5),
@@ -31,29 +20,11 @@ OUTLETS = [
     (4, "Valu$ Bedok Central", 0.8),
 ]
 
-PRODUCTS = [
-    (1, "RG-001", "Rice 25kg Premium", 1, 28.50, 210, 150, 45),
-    (2, "RG-002", "Rice 10kg Value", 1, 12.90, 340, 200, 60),
-    (3, "RG-003", "Basmati Rice 5kg", 1, 9.80, 180, 100, 25),
-    (4, "CE-001", "Cooking Oil 5L", 2, 11.50, 145, 120, 55),
-    (5, "CE-002", "Soy Sauce 1L", 2, 3.20, 420, 200, 30),
-    (6, "CE-003", "Sugar 1kg Bundle", 2, 2.80, 380, 250, 40),
-    (7, "IN-001", "Instant Noodles Carton (30)", 3, 8.90, 450, 300, 70),
-    (8, "IN-002", "Bee Hoon 500g (x20)", 3, 6.50, 260, 150, 35),
-    (9, "CG-001", "Canned Sardines (x24)", 4, 18.90, 190, 100, 28),
-    (10, "CG-002", "Canned Luncheon Meat (x12)", 4, 22.50, 160, 80, 22),
-    (11, "BV-001", "Mineral Water 1.5L (x12)", 5, 6.90, 520, 300, 80),
-    (12, "BV-002", "Packet Drinks Assorted (x24)", 5, 9.50, 380, 200, 55),
-    (13, "BV-003", "Instant Coffee 3-in-1 (x30)", 5, 12.80, 290, 150, 42),
-    (14, "SN-001", "Potato Chips Carton (x24)", 6, 15.90, 310, 200, 48),
-    (15, "SN-002", "Biscuit Assortment (x36)", 6, 13.50, 270, 180, 38),
-    (16, "SN-003", "Chocolate Bars (x48)", 6, 24.00, 200, 120, 30),
-    (17, "CL-001", "Floor Cleaner 5L (x6)", 7, 9.80, 180, 100, 20),
-    (18, "CL-002", "Dishwashing Liquid 1L (x12)", 7, 7.50, 320, 200, 32),
-    (19, "PC-001", "Tissue Box (x24)", 8, 8.90, 400, 250, 50),
-    (20, "PC-002", "Hand Soap 500ml (x12)", 8, 6.20, 280, 150, 28),
+TARGET_NAMES = [
+    "Premium Cola", "Potato Chips", "Instant Noodles", 
+    "Energy Drink", "Laundry Detergent", "Cleaning Liquid"
 ]
-
+WHITELIST_IDS = ['1', '2', '3', '4', '5', '6']
 
 def _is_sg_holiday(d: datetime) -> bool:
     md = (d.month, d.day)
@@ -69,7 +40,6 @@ def _is_sg_holiday(d: datetime) -> bool:
         return True
     return False
 
-
 def _is_school_holiday(d: datetime) -> bool:
     if d.month == 3 and 14 <= d.day <= 22:
         return True
@@ -81,9 +51,8 @@ def _is_school_holiday(d: datetime) -> bool:
         return True
     return False
 
-
 def _generate_daily_demand(product_row, outlet_row, date: datetime, day_index: int) -> int:
-    _, _, _, category_id, _, _, _, base = product_row
+    _, _, _, category_id, _, _, reorder_level, base = product_row
     _, _, multiplier = outlet_row
 
     dow = date.weekday()
@@ -109,15 +78,71 @@ def _generate_daily_demand(product_row, outlet_row, date: datetime, day_index: i
     demand = base * multiplier * weekly_factor * monthly_factor * holiday_factor * school_factor * trend * noise
     return max(1, int(round(demand)))
 
+def fetch_live_products():
+    """Fetch live storefront products and map them."""
+    all_supabase_products = select_rows("products")
+    
+    supabase_products = []
+    for p in all_supabase_products:
+        is_match = p.get('mock_id') in WHITELIST_IDS or any(tn.lower() in p.get('name', '').lower() for tn in TARGET_NAMES)
+        if is_match and len(supabase_products) < 6:
+            supabase_products.append(p)
+
+    if not supabase_products:
+        print("[ERROR] Could not find any of the target products in Supabase `products` table!")
+        return [], []
+
+    # Map categories
+    unique_cats = sorted(list(set(p['category'] for p in supabase_products)))
+    categories = [{"id": i+1, "name": cat} for i, cat in enumerate(unique_cats)]
+    cat_map = {cat['name']: cat['id'] for cat in categories}
+
+    # Map products
+    # Result tuple: (id, name, category_id, current_stock, reorder_level, base_daily_demand)
+    products = []
+    for p in supabase_products:
+        m_id = int(p['mock_id'])
+        c_id = cat_map[p['category']]
+        stock = int(p['stock'])
+        reorder = int(stock * 0.4)
+        base_demand = random.randint(30, 60)
+        
+        products.append((m_id, f"SKU-{m_id:03d}", p['name'], c_id, stock, reorder, base_demand))
+
+    return categories, sorted(products, key=lambda x: x[0])
+
 
 def seed_supabase():
-    print("Seeding Supabase forecasting tables...")
+    print("Seeding Supabase forecasting tables from LIVE products...")
 
-    # Clear previous forecast history and jobs so the seed is repeatable.
+    cats, prods = fetch_live_products()
+    if not prods:
+        return
+
+    # Clear previous data
+    print("Clearing old data...")
     delete_rows("historical_orders")
     delete_rows("forecasts")
     delete_rows("forecast_jobs")
+    delete_rows("forecast_products")
+    delete_rows("forecast_categories")
 
+    # Insert new category and product info
+    print("Inserting filtered categories and products...")
+    insert_rows("forecast_categories", cats)
+    
+    prod_inserts = []
+    for p in prods:
+        prod_inserts.append({
+            "id": p[0],
+            "name": p[2],
+            "category_id": p[3],
+            "current_stock": p[4],
+            "reorder_level": p[5]
+        })
+    insert_rows("forecast_products", prod_inserts)
+
+    # Generate History
     random.seed(42)
     start_date = datetime(2025, 1, 1)
     num_days = 365
@@ -129,8 +154,13 @@ def seed_supabase():
         date_str = current_date.strftime("%Y-%m-%d")
 
         for outlet in OUTLETS:
-            for product in PRODUCTS:
-                qty = _generate_daily_demand(product, outlet, current_date, day_idx)
+            for product in prods:
+                # product is a tuple: (id, sku, name, category_id, stock, reorder, base)
+                # _generate_daily_demand expects it to be unpacked. Wait, let's pad it to match old length:
+                # pad: (id, sku, name, cat_id, price, stock, reorder, base)
+                padded_product = (product[0], product[1], product[2], product[3], 0.0, product[4], product[5], product[6])
+                
+                qty = _generate_daily_demand(padded_product, outlet, current_date, day_idx)
                 buyer = random.choice(buyer_types)
                 order_rows.append(
                     {
@@ -148,7 +178,7 @@ def seed_supabase():
         insert_rows("historical_orders", batch)
         print(f"  Inserted {min(i + batch_size, len(order_rows)):,}/{len(order_rows):,} order rows")
 
-    print("[OK] Supabase forecasting tables seeded successfully.")
+    print(f"[OK] Supabase forecasting tables seeded successfully with {len(prods)} products.")
 
 
 if __name__ == "__main__":

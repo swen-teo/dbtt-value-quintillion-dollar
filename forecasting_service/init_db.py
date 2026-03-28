@@ -3,12 +3,19 @@ init_db.py — Initialise the Valu$ Wholesale sample MySQL database.
 
 Creates `valu_forecast` database and populates it with ~1 year of daily
 order data across 4 distinct store locations.
+NOW SYNCED WITH SUPABASE PRODUCTS.
 """
 
 import pymysql
 import random
 import math
+import os
+import requests
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from project root
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # DB Connection Config
 DB_HOST = "127.0.0.1"
@@ -17,16 +24,80 @@ DB_PASS = ""
 DB_PORT = 3306
 DB_NAME = "valu_forecast"
 
-# ── Categories ───────────────────────────────────────────────────────────────
-CATEGORIES = [
-    (1, "Rice & Grains"),
-    (2, "Cooking Essentials"),
-    (3, "Instant Noodles & Pasta"),
-    (4, "Canned Goods"),
-    (5, "Beverages"),
-    (6, "Snacks & Confectionery"),
-    (7, "Cleaning & Household"),
-    (8, "Personal Care"),
+# Supabase Config
+SUPABASE_URL = os.getenv("VITE_SUPABASE_URL")
+SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY")
+
+def fetch_supabase_products():
+    """Fetch live products from Supabase and map to Forecasting schema."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("[WARNING] Supabase credentials missing. Falling back to local defaults.")
+        return None, None
+
+    # THE ONLY 6 PRODUCTS FOR THE DEMO
+    TARGET_NAMES = [
+        "Premium Cola", "Potato Chips", "Instant Noodles", 
+        "Energy Drink", "Laundry Detergent", "Cleaning Liquid"
+    ]
+    WHITELIST_IDS = ['1', '2', '3', '4', '5', '6']
+
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/products?select=*"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}"
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        all_supabase_products = response.json()
+
+        # Filter to ONLY the requested 6 items (match by ID or Title)
+        supabase_products = []
+        for p in all_supabase_products:
+            is_match = p['mock_id'] in WHITELIST_IDS or any(tn.lower() in p['name'].lower() for tn in TARGET_NAMES)
+            if is_match and len(supabase_products) < 6:
+                supabase_products.append(p)
+
+        if not supabase_products:
+            print("[ERROR] Could not find any of the target products in Supabase!")
+            return None, None
+
+        # 1. Extract and map categories
+        unique_cats = sorted(list(set(p['category'] for p in supabase_products)))
+        categories = [(i+1, cat) for i, cat in enumerate(unique_cats)]
+        cat_map = {cat: i+1 for i, cat in categories}
+
+        # 2. Map products
+        products = []
+        for p in supabase_products:
+            m_id = int(p['mock_id'])
+            sku = f"SKU-{m_id:03d}"
+            name = p['name']
+            c_id = cat_map[p['category']]
+            price = float(p['cash_price'])
+            stock = int(p['stock'])
+            reorder = int(stock * 0.4) 
+            base_demand = random.randint(30, 60) # High-velocity items
+            
+            products.append((m_id, sku, name, c_id, price, stock, reorder, base_demand))
+        
+        return categories, sorted(products, key=lambda x: x[0])
+
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch Supabase products: {e}")
+        return None, None
+
+# ── Fallback Data (In case Supabase is unreachable) ──────────────────────────
+DEFAULT_CATEGORIES = [
+    (1, "Rice & Grains"), (2, "Cooking Essentials"), (3, "Instant Noodles & Pasta"),
+    (4, "Canned Goods"), (5, "Beverages"), (6, "Snacks & Confectionery"),
+    (7, "Cleaning & Household"), (8, "Personal Care"),
+]
+
+DEFAULT_PRODUCTS = [
+    (1,  "RG-001", "Rice 25kg Premium",          1, 28.50, 210,  150, 45),
+    (2,  "RG-002", "Rice 10kg Value",            1, 12.90, 340,  200, 60),
+    (11, "BV-001", "Mineral Water 1.5L (x12)",   5,  6.90, 520,  300, 80),
 ]
 
 # ── Outlets (Stores) ─────────────────────────────────────────────────────────
@@ -37,34 +108,7 @@ OUTLETS = [
     (4, "Valu$ Bedok Central", 0.8),    # Lower volume
 ]
 
-# ── Products ─────────────────────────────────────────────────────────────────
-# (id, sku, name, category_id, unit_price, current_stock, reorder_level, base_daily_demand)
-PRODUCTS = [
-    (1,  "RG-001", "Rice 25kg Premium",          1, 28.50, 210,  150, 45),
-    (2,  "RG-002", "Rice 10kg Value",            1, 12.90, 340,  200, 60),
-    (3,  "RG-003", "Basmati Rice 5kg",           1,  9.80, 180,  100, 25),
-    (4,  "CE-001", "Cooking Oil 5L",             2, 11.50, 145,  120, 55),
-    (5,  "CE-002", "Soy Sauce 1L",               2,  3.20, 420,  200, 30),
-    (6,  "CE-003", "Sugar 1kg Bundle",           2,  2.80, 380,  250, 40),
-    (7,  "IN-001", "Instant Noodles Carton (30)",3,  8.90, 450,  300, 70),
-    (8,  "IN-002", "Bee Hoon 500g (x20)",        3,  6.50, 260,  150, 35),
-    (9,  "CG-001", "Canned Sardines (x24)",      4, 18.90, 190,  100, 28),
-    (10, "CG-002", "Canned Luncheon Meat (x12)", 4, 22.50, 160,   80, 22),
-    (11, "BV-001", "Mineral Water 1.5L (x12)",   5,  6.90, 520,  300, 80),
-    (12, "BV-002", "Packet Drinks Assorted (x24)",5, 9.50, 380,  200, 55),
-    (13, "BV-003", "Instant Coffee 3-in-1 (x30)",5, 12.80, 290,  150, 42),
-    (14, "SN-001", "Potato Chips Carton (x24)",  6, 15.90, 310,  200, 48),
-    (15, "SN-002", "Biscuit Assortment (x36)",   6, 13.50, 270,  180, 38),
-    (16, "SN-003", "Chocolate Bars (x48)",       6, 24.00, 200,  120, 30),
-    (17, "CL-001", "Floor Cleaner 5L (x6)",      7,  9.80, 180,  100, 20),
-    (18, "CL-002", "Dishwashing Liquid 1L (x12)",7,  7.50, 320,  200, 32),
-    (19, "PC-001", "Tissue Box (x24)",           8,  8.90, 400,  250, 50),
-    (20, "PC-002", "Hand Soap 500ml (x12)",      8,  6.20, 280,  150, 28),
-]
-
-
 def _is_sg_holiday(d: datetime) -> bool:
-    """Check if a date falls on or near a major SG holiday / event."""
     md = (d.month, d.day)
     if d.month == 1 and d.day >= 20: return True
     if d.month == 2 and d.day <= 14: return True
@@ -74,7 +118,6 @@ def _is_sg_holiday(d: datetime) -> bool:
     return False
 
 def _is_school_holiday(d: datetime) -> bool:
-    """Approximate Singapore school holiday windows."""
     if d.month == 3 and 14 <= d.day <= 22: return True
     if d.month == 6: return True
     if d.month == 9 and 1 <= d.day <= 10: return True
@@ -82,7 +125,6 @@ def _is_school_holiday(d: datetime) -> bool:
     return False
 
 def _generate_daily_demand(product_row, outlet_row, date: datetime, day_index: int) -> int:
-    """Generate daily demand incorporating base demand, outlet multiplier, seasonality, etc."""
     _, _, _, category_id, _, _, _, base = product_row
     _, _, multiplier = outlet_row
 
@@ -95,22 +137,23 @@ def _generate_daily_demand(product_row, outlet_row, date: datetime, day_index: i
     else: monthly_factor = 1.0
 
     holiday_factor = 1.40 if _is_sg_holiday(date) else 1.0
-
-    school_factor = 1.0
-    if _is_school_holiday(date):
-        if category_id in (5, 6): school_factor = 1.35
-        else: school_factor = 1.12
-
+    school_factor = 1.12 if _is_school_holiday(date) else 1.0
+    
     trend = 1.0 + 0.005 * (day_index / 30)
     noise = random.uniform(0.80, 1.20)
 
-    # Calculate final demand
     demand = base * multiplier * weekly_factor * monthly_factor * holiday_factor * school_factor * trend * noise
     return max(1, int(round(demand)))
 
-
 def create_database():
     """Build the MySQL database from scratch."""
+    print("--- Valu$ AI Forecasting DB Sync ---")
+    
+    # Fetch live products
+    categories, products = fetch_supabase_products()
+    if not products:
+        categories, products = DEFAULT_CATEGORIES, DEFAULT_PRODUCTS
+
     # First connect without specifying DB to create it
     conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, port=DB_PORT)
     cur = conn.cursor()
@@ -124,19 +167,8 @@ def create_database():
     cur = conn.cursor()
 
     # ── Schema ────────────────────────────────────────────────────────────
-    cur.execute("""
-        CREATE TABLE categories (
-            id INT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE outlets (
-            id INT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            demand_multiplier FLOAT NOT NULL
-        )
-    """)
+    cur.execute("CREATE TABLE categories (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL)")
+    cur.execute("CREATE TABLE outlets (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, demand_multiplier FLOAT NOT NULL)")
     cur.execute("""
         CREATE TABLE products (
             id INT PRIMARY KEY,
@@ -176,24 +208,24 @@ def create_database():
         )
     """)
     
-    # Indexes for faster queries
     cur.execute("CREATE INDEX idx_orders ON historical_orders(outlet_id, product_id, order_date)")
     cur.execute("CREATE INDEX idx_forecasts ON forecasts(outlet_id, product_id, forecast_date)")
 
     # ── Seed Base Data ────────────────────────────────────────────────────
-    cur.executemany("INSERT INTO categories VALUES (%s, %s)", CATEGORIES)
+    cur.executemany("INSERT INTO categories VALUES (%s, %s)", categories)
     cur.executemany("INSERT INTO outlets VALUES (%s, %s, %s)", OUTLETS)
     
-    product_inserts = [(p[0], p[1], p[2], p[3], p[4], p[5], p[6]) for p in PRODUCTS]
+    product_inserts = [(p[0], p[1], p[2], p[3], p[4], p[5], p[6]) for p in products]
     cur.executemany(
         "INSERT INTO products (id, sku, name, category_id, unit_price, current_stock, reorder_level) VALUES (%s, %s, %s, %s, %s, %s, %s)",
         product_inserts
     )
 
     # ── Generate 1 Year of Daily Orders per Outlet ───────────────────────
+    print(f"Generating history for {len(products)} products across {len(OUTLETS)} outlets...")
     random.seed(42)
     start_date = datetime(2025, 1, 1)
-    num_days = 365  # 1 year
+    num_days = 365
     buyer_types = ["standard", "standard", "standard", "prime", "prime"]
 
     order_rows = []
@@ -202,12 +234,11 @@ def create_database():
         date_str = current_date.strftime("%Y-%m-%d")
 
         for outlet in OUTLETS:
-            for product in PRODUCTS:
+            for product in products:
                 qty = _generate_daily_demand(product, outlet, current_date, day_idx)
                 buyer = random.choice(buyer_types)
                 order_rows.append((product[0], outlet[0], date_str, qty, buyer))
 
-    # Insert in batches to avoid max_allowed_packet issues
     batch_size = 5000
     for i in range(0, len(order_rows), batch_size):
         batch = order_rows[i:i+batch_size]
@@ -218,18 +249,13 @@ def create_database():
 
     conn.commit()
 
-    # ── Summary ───────────────────────────────────────────────────────────
     cur.execute("SELECT COUNT(*) FROM historical_orders")
     total_orders = cur.fetchone()[0]
     
-    print(f"[OK] Database '{DB_NAME}' created in MySQL (port {DB_PORT})")
-    print(f"     Outlets:   {len(OUTLETS)}")
-    print(f"     Products:  {len(PRODUCTS)}")
-    print(f"     Orders:    {total_orders:,}")
-    print(f"     Date range: {start_date.strftime('%Y-%m-%d')} to {(start_date + timedelta(days=num_days - 1)).strftime('%Y-%m-%d')}")
-
+    print(f"[OK] Database '{DB_NAME}' synced with Supabase products.")
+    print(f"     Products Synced: {len(products)}")
+    print(f"     Historical Orders Generated: {total_orders:,}")
     conn.close()
-
 
 if __name__ == "__main__":
     create_database()

@@ -8,8 +8,8 @@
     "dev": "vite",
     "start": "npm run dev",
     "web:start": "npm run dev",
-    "forecast:seed": "pip3 install -q -r forecasting_service/requirements.txt && python3 forecasting_service/seed_supabase.py",
-    "legacy:start": "pip3 install -q -r forecasting_service/requirements.txt && concurrently -n WORKER,VITE -c yellow,cyan \"python3 forecasting_service/app.py\" \"npm run dev\""
+    "forecast:seed": "pip install -q -r forecasting_service/requirements.txt && python forecasting_service/seed_supabase.py",
+    "legacy:start": "pip install -q -r forecasting_service/requirements.txt && concurrently -n WORKER,VITE -c yellow,cyan \"python forecasting_service/app.py\" \"npm run dev\""
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

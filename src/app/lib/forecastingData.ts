@@ -208,7 +208,10 @@ function buildTrajectoryData(
     confidence_upper: number;
   }>,
 ) {
-  const trajectory: TrajectoryPoint[] = historicalDaily.map((item) => ({
+  // Only show the last ~6 months of history so the chart isn't cramped
+  const recentHistory = historicalDaily.slice(-180);
+
+  const trajectory: TrajectoryPoint[] = recentHistory.map((item) => ({
     label: item.date.slice(5),
     historical: item.total,
     forecast: null,
@@ -229,6 +232,25 @@ function buildTrajectoryData(
   return trajectory;
 }
 
+export async function getProducts(): Promise<Product[]> {
+  if (isSupabaseConfigured()) {
+    try {
+      return await fetchSupabaseTable<Product>(
+        "forecast_products",
+        "id,name,category_id,current_stock,reorder_level",
+        {},
+        "id.asc",
+      );
+    } catch (error) {
+      if (shouldFallbackToLegacy(error) && canUseLegacyApi()) {
+        return fetchLegacyJson<Product[]>("/products");
+      }
+      throw error;
+    }
+  }
+  return fetchLegacyJson<Product[]>("/products");
+}
+
 export async function getOutlets(): Promise<Outlet[]> {
   if (isSupabaseConfigured()) {
     try {
@@ -246,9 +268,18 @@ export async function getOutlets(): Promise<Outlet[]> {
 
 export async function getForecastingSnapshot(
   outletId: number,
+  productId?: number,
 ): Promise<ForecastingSnapshot> {
   if (isSupabaseConfigured()) {
     try {
+      const historyFilter: Record<string, any> = { outlet_id: outletId };
+      const forecastFilter: Record<string, any> = { outlet_id: outletId };
+      
+      if (productId) {
+        historyFilter.product_id = productId;
+        forecastFilter.product_id = productId;
+      }
+
       const [categories, products, historicalOrders, forecastRows] =
         await Promise.all([
           fetchSupabaseTable<Category>("forecast_categories", "id,name", {}, "id.asc"),
@@ -261,13 +292,13 @@ export async function getForecastingSnapshot(
           fetchSupabaseTable<HistoricalOrder>(
             "historical_orders",
             "order_date,quantity",
-            { outlet_id: outletId },
+            historyFilter,
             "order_date.asc",
           ),
           fetchSupabaseTable<ForecastRow>(
             "forecasts",
             "product_id,forecast_date,predicted_demand,confidence_lower,confidence_upper,generated_at",
-            { outlet_id: outletId },
+            forecastFilter,
             "forecast_date.asc",
           ),
         ]);
