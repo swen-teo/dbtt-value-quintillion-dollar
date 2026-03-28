@@ -17,6 +17,7 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { supabase } from '../../lib/supabaseClient';
 
 type ProductOption = {
   id: string;
@@ -81,9 +82,11 @@ export default function LogisticsHubCollections() {
   const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
   const [isDownloading, setIsDownloading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
+  const [submissionStatusType, setSubmissionStatusType] = useState<'success' | 'error' | null>(null);
   const [queueRequests, setQueueRequests] = useState<QueueRequest[]>(DEFAULT_QUEUE_REQUESTS);
   const [recentRequests, setRecentRequests] = useState<RecentRequest[]>(DEFAULT_RECENT_REQUESTS);
   const [productOptions, setProductOptions] = useState<ProductOption[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [isSkuFocused, setIsSkuFocused] = useState(false);
   const currentShopName = sessionStorage.getItem('shopName') || 'Current Shop';
 
@@ -271,7 +274,9 @@ export default function LogisticsHubCollections() {
       ...prev,
       item: `${product.mock_id} · ${product.name}`,
     }));
+    setSelectedProduct(product);
     setSubmissionStatus(null);
+    setSubmissionStatusType(null);
     setIsSkuFocused(false);
   };
 
@@ -279,7 +284,20 @@ export default function LogisticsHubCollections() {
     const item = requestForm.item.trim();
     const quantity = Number(requestForm.quantity);
 
-    if (!item || !quantity || quantity <= 0) {
+    if (!selectedProduct || !item || !quantity || quantity <= 0) {
+      setSubmissionStatusType('error');
+      setSubmissionStatus('Please choose a product from the SKU suggestions and enter a valid quantity.');
+      return;
+    }
+
+    if (selectedProduct && item !== `${selectedProduct.mock_id} · ${selectedProduct.name}`) {
+      setSubmissionStatusType('error');
+      setSubmissionStatus('Please select a product from the suggestions instead of typing free text.');
+      return;
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      setSubmissionStatusType('error');
       setSubmissionStatus('Please enter an item and a valid quantity before submitting.');
       return;
     }
@@ -321,10 +339,14 @@ export default function LogisticsHubCollections() {
         item: '',
         quantity: '',
       });
+      setSelectedProduct(null);
+      setSubmissionStatusType('success');
       setSubmissionStatus(`Request sent to ${requestForm.hub} and saved to Supabase.`);
     } catch (error) {
       console.error('Failed to submit hub request:', error);
-      setSubmissionStatus('Failed to save the request to Supabase. Please try again.');
+      const message = error instanceof Error ? error.message : 'Unknown Supabase error';
+      setSubmissionStatusType('error');
+      setSubmissionStatus(`Failed to save the request to Supabase: ${message}`);
     }
   };
 
@@ -431,7 +453,9 @@ export default function LogisticsHubCollections() {
                       onBlur={() => window.setTimeout(() => setIsSkuFocused(false), 150)}
                       onChange={(e) => {
                         setRequestForm({ ...requestForm, item: e.target.value });
+                        setSelectedProduct(null);
                         setSubmissionStatus(null);
+                        setSubmissionStatusType(null);
                       }}
                       className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-[12px] font-bold text-sm focus:ring-2 focus:ring-[#ff6900]/20 outline-none transition-all"
                     />
@@ -476,7 +500,11 @@ export default function LogisticsHubCollections() {
                 </div>
               </div>
               {submissionStatus && (
-                <p className="mt-4 text-sm font-bold text-emerald-600">
+                <p
+                  className={`mt-4 text-sm font-bold ${
+                    submissionStatusType === 'error' ? 'text-rose-600' : 'text-emerald-600'
+                  }`}
+                >
                   {submissionStatus}
                 </p>
               )}
