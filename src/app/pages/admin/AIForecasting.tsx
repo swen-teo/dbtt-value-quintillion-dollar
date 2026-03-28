@@ -397,7 +397,6 @@ export default function AIForecasting() {
                             </th>
                             <th className="p-5 font-bold text-[#1B2A4A] border-b border-gray-100 text-right">Forecast (30d)</th>
                             <th className="p-5 font-bold border-b border-gray-100 text-right">Shortfall</th>
-                            <th className="p-5 font-bold border-b border-gray-100 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -412,11 +411,6 @@ export default function AIForecasting() {
                                 <td className="p-5 font-medium text-[#1f2937] text-sm text-right">{a.current_stock.toLocaleString()} units</td>
                                 <td className="p-5 font-extrabold text-[#E8651A] text-sm text-right">{a.total_forecast_30d.toLocaleString()} units</td>
                                 <td className="p-5 font-extrabold text-[#ef4444] text-sm text-right">-{Math.max(0, a.total_forecast_30d - a.current_stock).toLocaleString()} units</td>
-                                <td className="p-5 text-center">
-                                    <button className={`px-4 py-2 font-bold text-xs rounded-[12px] shadow-sm transition-colors ${a.total_forecast_30d - a.current_stock > 500 ? 'bg-[#ff6900] text-white hover:bg-[#e05d00]' : 'bg-[#fff7ed] text-[#ff6900] border border-[#ff6900] hover:bg-[#ffeadd]'}`}>
-                                        {a.total_forecast_30d - a.current_stock > 500 ? 'Auto-Order' : 'Draft PO'}
-                                    </button>
-                                </td>
                             </tr>
                         ))}
                     </tbody>
