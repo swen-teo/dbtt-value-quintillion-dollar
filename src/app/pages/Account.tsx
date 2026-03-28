@@ -240,27 +240,8 @@ export default function Account() {
 
                           <div className="text-right mt-4">
                             <button 
-                              onClick={async () => {
-                                const newTier = 'prime';
-                                setCustomer({ ...customer, membershipTier: newTier });
-                                sessionStorage.setItem('accountType', newTier);
-                                // Reset Grab Link on fresh upgrade
-                                sessionStorage.removeItem('grabLinked');
-                                sessionStorage.removeItem('grabEmail');
-                                setIsGrabLinked(false);
-                                
-                                // Update DB
-                                const customerId = sessionStorage.getItem('customerId');
-                                if (customerId) {
-                                  try {
-                                    const { supabase } = await import('../lib/supabaseClient');
-                                    await supabase.from('customers').update({ membership_tier: newTier }).eq('id', customerId);
-                                  } catch (err) {
-                                    console.error("Failed to update membership tier:", err);
-                                  }
-                                }
-
-                                window.dispatchEvent(new Event('accountTypeChanged'));
+                              onClick={() => {
+                                navigate('/customer/subscribe-prime');
                               }}
                               className="bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all"
                             >
