@@ -43,6 +43,8 @@ export default function LogisticsHubCollections() {
     { id: 'REQ-102', shop: 'Jurong Gateway', zone: 'West', priority: 'medium', units: 220, time: '4h ago' },
     { id: 'REQ-103', shop: 'AMK Central', zone: 'North', priority: 'high', units: 580, time: '5h ago' },
     { id: 'REQ-104', shop: 'Tampines Hub', zone: 'East', priority: 'low', units: 120, time: '6h ago' },
+    { id: 'REQ-105', shop: 'Woodlands Mart', zone: 'North', priority: 'medium', units: 310, time: '8h ago' },
+    { id: 'REQ-106', shop: 'Clementi Mall #02', zone: 'West', priority: 'high', units: 440, time: '9h ago' },
   ];
 
   const filteredRequests = selectedZone 
@@ -77,350 +79,309 @@ export default function LogisticsHubCollections() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f4ea] p-8 space-y-8 font-sans">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 text-[#ff6900] mb-2">
-            <Navigation className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Logistics Command Center</span>
+    <div className="h-full flex flex-col bg-[#faf9f6]/95 overflow-hidden p-4 gap-3">
+      {/* Page Header (Ultra Compact) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 px-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[#ff6900] mb-0.5">
+            <Navigation className="w-3.5 h-3.5" />
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Logistics Center</span>
           </div>
-          <h1 className="text-4xl font-extrabold text-[#1b2a4a] tracking-tight">
+          <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">
             Supply Chain Orchestration
           </h1>
-          <p className="text-[#6b7280] mt-1 font-medium italic">
-            {isHubManager 
-              ? 'Multi-zone fulfillment & high-capacity hub operations interface.' 
-              : 'Local inventory replenishment & heartland outlet restock portal.'}
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-           <div className="bg-white border-2 border-slate-100 rounded-2xl px-4 py-3 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-[#ff6900]">
-                {isHubManager ? <Warehouse className="w-5 h-5" /> : <Store className="w-5 h-5" />}
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider leading-none">Access Level</p>
-                <p className="text-sm font-bold text-slate-900 mt-1">
-                  {isHubManager ? 'Warehouse Hub Manager' : 'Heartland Outlet Manager'}
-                </p>
-              </div>
+        <div className="flex items-center gap-2 bg-white px-2.5 h-8 rounded-[11px] border border-slate-200 shadow-sm">
+           <div className="flex items-center gap-1.5 pr-2.5 border-r border-slate-100">
+              {isHubManager ? <Warehouse className="w-3.5 h-3.5 text-slate-400" /> : <Store className="w-3.5 h-3.5 text-slate-400" />}
+              <span className="text-[8px] font-black uppercase tracking-widest leading-none text-slate-400">Access:</span>
            </div>
+           <p className="text-[8px] font-black uppercase tracking-widest text-[#1b2a4a] leading-none">
+              {isHubManager ? 'Hub Manager' : 'Outlet Manager'}
+           </p>
         </div>
       </div>
 
-      {/* Main Tab Control */}
-      <div className="flex bg-white/50 p-1.5 rounded-[20px] border border-gray-200 w-fit backdrop-blur-sm">
+      {/* Main Tab Switcher (Compact h-8) */}
+      <div className="flex bg-white/50 p-1 rounded-[12px] border border-gray-200 w-fit backdrop-blur-sm ml-2">
         <button
           onClick={() => setActiveTab('request')}
-          className={`flex items-center gap-3 px-8 h-12 rounded-[16px] font-bold text-sm tracking-wide transition-all ${
+          className={`flex items-center gap-2 px-5 h-7 rounded-[8px] font-black text-[9px] uppercase tracking-widest transition-all ${
             activeTab === 'request' 
-              ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20' 
-              : 'text-slate-500 hover:text-slate-800'
+              ? 'bg-slate-900 text-white' 
+              : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Request Restock
         </button>
         
         {isHubManager && (
           <button
             onClick={() => setActiveTab('hub')}
-            className={`flex items-center gap-3 px-8 h-12 rounded-[16px] font-bold text-sm tracking-wide transition-all ${
+            className={`flex items-center gap-2 px-5 h-7 rounded-[8px] font-black text-[9px] uppercase tracking-widest transition-all ${
               activeTab === 'hub' 
-                ? 'bg-gradient-to-r from-[#ff6900] to-[#ff8534] text-white shadow-xl shadow-orange-500/20' 
-                : 'text-slate-500 hover:text-orange-600'
+                ? 'bg-[#ff6900] text-white' 
+                : 'text-slate-400 hover:text-[#ff6900]'
             }`}
           >
-            <Navigation className="w-4 h-4" />
+            <Navigation className="w-3.5 h-3.5" />
             Hub Portal
           </button>
         )}
       </div>
 
       {activeTab === 'request' ? (
-        /* Request Restock View - Clean Premium Redesign */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#1b2a4a]">Post New Request</h2>
-                  <p className="text-gray-400 text-sm font-medium">Daily inventory replenishment order</p>
-                </div>
-                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-                  <Activity className="w-6 h-6" />
-                </div>
+        /* Request Restock View (Shop Perspective) - 'Ultra Fit' */
+        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-3 animate-in fade-in duration-300">
+          <div className="flex flex-col gap-3 min-h-0">
+            <div className="bg-white rounded-[18px] p-4 shadow-sm border border-slate-200/60 flex-shrink-0">
+              <div className="mb-4">
+                <h2 className="text-base font-black text-[#1b2a4a] tracking-tight uppercase leading-none">Post New Request</h2>
+                <p className="text-slate-400 text-[8px] font-black uppercase tracking-widest mt-1.5 leading-none">Inventory Replenishment Order</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Fulfillment Hub</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-0.5 opacity-60">Fulfillment Hub</label>
                   <select 
                     value={requestForm.hub}
                     onChange={(e) => setRequestForm({...requestForm, hub: e.target.value})}
-                    className="w-full h-14 px-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 focus:border-[#ff6900] focus:bg-white outline-none transition-all appearance-none"
+                    className="w-full h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-[8px] font-bold text-xs outline-none transition-all"
                   >
-                    <option>Bedok Central Hub (East)</option>
-                    <option>Jurong West Hub (West)</option>
-                    <option>Woodlands Central (North)</option>
+                    <option>Bedok Hub (E)</option>
+                    <option>Jurong Hub (W)</option>
+                    <option>Woodlands (N)</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">SKU Search</label>
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-0.5 opacity-60">SKU Search</label>
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      placeholder="Product name..."
-                      className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 focus:border-[#ff6900] focus:bg-white outline-none transition-all"
+                      placeholder="Product..."
+                      className="w-full h-8 pl-8 pr-2.5 bg-slate-50 border border-slate-200 rounded-[8px] font-bold text-xs outline-none transition-all"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Unit Quantity</label>
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-0.5 opacity-60">Units</label>
                   <input 
                     type="number"
-                    placeholder="e.g. 500"
-                    className="w-full h-14 px-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 focus:border-[#ff6900] focus:bg-white outline-none transition-all"
+                    placeholder="Qty"
+                    className="w-full h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-[8px] font-bold text-xs outline-none transition-all"
                   />
                 </div>
                 <div className="flex items-end">
-                  <button className="w-full h-14 bg-[#1b2a4a] text-white rounded-2xl font-bold hover:shadow-2xl hover:shadow-slate-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-widest text-xs">
-                    Dispatch Request
-                    <ArrowRight className="w-4 h-4" />
+                  <button className="w-full h-8 bg-slate-900 text-white rounded-[8px] font-black text-[9px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm flex items-center justify-center gap-1.5">
+                    Submit
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Tracking List */}
-            <div className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-gray-100">
-               <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#1b2a4a]">Fulfillment Stream</h3>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Active Restock Tickets</p>
-                  </div>
+            {/* Fulfillment Stream (Internal Scroll) */}
+            <div className="flex-1 overflow-hidden bg-white rounded-[18px] shadow-sm border border-slate-200/60 flex flex-col">
+               <div className="px-5 py-3 border-b border-slate-50 flex-shrink-0">
+                  <h3 className="text-sm font-black text-[#1b2a4a] tracking-tight leading-none uppercase">Fulfillment Stream</h3>
                </div>
-               <div className="divide-y divide-slate-50">
+               <div className="flex-1 overflow-y-auto divide-y divide-slate-50 custom-scrollbar">
                   {[
                     { id: 'ORD-921', item: 'Thai Fragrant Rice 5kg', qty: 240, status: 'In Transit', date: 'Today' },
                     { id: 'ORD-920', item: 'Cooking Oil Premium 2L', qty: 150, status: 'Confirmed', date: 'Yesterday' },
+                    { id: 'ORD-919', item: 'Omega 6 Eggs 30s', qty: 100, status: 'Completed', date: '2d ago' },
+                    { id: 'ORD-918', item: 'Canned Sardines 425g', qty: 300, status: 'Completed', date: '3d ago' },
                   ].map((order) => (
-                    <div key={order.id} className="p-8 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
-                      <div className="flex items-center gap-5">
-                         <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-[#ff6900] group-hover:scale-110 transition-transform">
-                            <Truck className="w-7 h-7" />
-                         </div>
-                         <div>
-                            <p className="font-bold text-[#1b2a4a] text-lg leading-tight">{order.item}</p>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{order.id} • {order.qty} Units</p>
-                         </div>
-                      </div>
-                      <div className="text-right">
-                         <span className={`px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wide border-2 ${
-                            order.status === 'In Transit' ? 'bg-orange-50 text-[#ff6900] border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                         }`}>
-                           {order.status}
-                         </span>
-                         <div className="flex items-center justify-end gap-1.5 mt-2 text-slate-400">
-                           <Clock className="w-3 h-3" />
-                           <p className="text-[10px] font-bold uppercase">{order.date}</p>
-                         </div>
-                      </div>
+                    <div key={order.id} className="p-3 px-5 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+                       <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-[#ff6900] flex-shrink-0 group-hover:bg-white transition-colors">
+                             <Truck className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                             <p className="font-bold text-[#1b2a4a] text-xs leading-none truncate">{order.item}</p>
+                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 leading-none">{order.id} • {order.qty} Units</p>
+                          </div>
+                       </div>
+                       <div className="text-right flex-shrink-0">
+                          <span className={`px-2 py-0.5 rounded-[5px] font-black text-[8px] uppercase tracking-widest border ${
+                             order.status === 'In Transit' ? 'bg-orange-50 text-[#ff6900] border-orange-100' : 
+                             order.status === 'Completed' ? 'bg-slate-50 text-slate-300 border-slate-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                          }`}>
+                            {order.status}
+                          </span>
+                       </div>
                     </div>
                   ))}
                </div>
             </div>
           </div>
 
-          {/* User Profile Bar - Integrated Styled */}
-          <div className="space-y-6">
-            <div className="bg-[#1b2a4a] rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -mr-24 -mt-24"></div>
-               <Store className="w-10 h-10 text-[#ff6900] mb-8" />
-               <h3 className="text-2xl font-bold tracking-tight mb-2">Outlet Identity</h3>
-               <p className="text-blue-200/60 text-sm font-medium leading-relaxed mb-8 italic">SHOP-493 (Bedok South Heartland) is currently synchronized with HQ logistics.</p>
+          {/* Outlet Identity (Right Bar) */}
+          <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
+            <div className="flex-1 bg-[#1b2a4a] rounded-[18px] p-5 text-white shadow-lg relative overflow-hidden flex flex-col">
+               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl -mr-12 -mt-12"></div>
+               <Store className="w-6 h-6 text-[#ff6900] mb-5 flex-shrink-0" />
+               <h3 className="text-base font-black tracking-tight mb-1 leading-none uppercase">Outlet ID</h3>
+               <p className="text-blue-200/40 text-[9px] font-bold leading-relaxed mb-6 uppercase tracking-wider">Bedok South Heartland #493</p>
                
-               <div className="space-y-5 pt-8 border-t border-white/10">
-                  <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                    <span className="text-[10px] font-black uppercase text-blue-200/40 tracking-widest">Active Hub Connection</span>
-                    <span className="text-xs font-bold font-mono tracking-tighter">B-HQ-7</span>
+               <div className="mt-auto space-y-2.5 pt-4 border-t border-white/10 flex-shrink-0">
+                  <div className="flex justify-between items-center bg-white/5 p-2 px-2.5 rounded-lg border border-white/5">
+                    <span className="text-[7px] font-black uppercase text-blue-200/30 tracking-widest">Hub</span>
+                    <span className="text-[9px] font-bold font-mono text-white">B-HQ-7</span>
                   </div>
-                  <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                    <span className="text-[10px] font-black uppercase text-blue-200/40 tracking-widest">Zone Placement</span>
-                    <span className="text-xs font-bold text-orange-400">EAST-04</span>
+                  <div className="flex justify-between items-center bg-white/5 p-2 px-2.5 rounded-lg border border-white/5">
+                    <span className="text-[7px] font-black uppercase text-blue-200/30 tracking-widest">Zone</span>
+                    <span className="text-[9px] font-bold text-orange-400">EAST-04</span>
                   </div>
                </div>
             </div>
 
             <button 
               onClick={() => navigate('/admin/dashboard')}
-              className="w-full bg-white border-2 border-slate-100 p-6 rounded-[32px] font-bold text-slate-900 hover:border-orange-500 hover:shadow-xl transition-all flex items-center justify-center gap-3 shadow-sm"
+              className="w-full bg-white border border-slate-200 h-8 rounded-[10px] font-black text-[8px] uppercase tracking-widest text-slate-400 hover:border-[#ff6900] hover:text-[#ff6900] hover:shadow-sm transition-all flex items-center justify-center gap-1.5 flex-shrink-0"
             >
-              <LayoutDashboard className="w-5 h-5 text-slate-400" />
-              Return to Dashboard
+              <LayoutDashboard className="w-3 h-3" />
+              HQ Dashboard
             </button>
           </div>
         </div>
       ) : (
-        /* Hub Portal View - Premium Orchestration UI */
-        <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-8 animate-in fade-in slide-in-from-right-4 duration-700">
+        /* Hub Portal View (Management Perspective) - 'Ultra Fit' */
+        <div className="flex-1 overflow-hidden grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-3 animate-in fade-in duration-300">
           
-          <div className="space-y-6">
-            <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#ff6900]">
-                  <MapIcon className="w-5 h-5" />
+          <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
+            <div className="flex-1 bg-white rounded-[18px] p-5 border border-slate-200/60 shadow-sm flex flex-col">
+              <div className="flex items-center gap-2.5 mb-5 flex-shrink-0">
+                <div className="w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center text-[#ff6900]">
+                  <MapIcon className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#1b2a4a]">Network Topology</h3>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Regional Zone Filtering</p>
+                  <h3 className="font-black text-slate-900 leading-none text-xs uppercase tracking-tight">Topology</h3>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2.5 flex-1 content-start overflow-hidden">
                 {[
-                   { id: 'North', count: 12, bg: 'bg-emerald-50 text-emerald-600' },
-                   { id: 'East', count: 8, bg: 'bg-orange-50 text-[#ff6900]' },
-                   { id: 'West', count: 18, bg: 'bg-blue-50 text-blue-600' },
-                   { id: 'Central', count: 24, bg: 'bg-purple-50 text-purple-600' }
+                   { id: 'North', count: 12 },
+                   { id: 'East', count: 8 },
+                   { id: 'West', count: 18 },
+                   { id: 'Central', count: 24 }
                 ].map(zone => (
                   <button
                     key={zone.id}
                     onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
-                    className={`relative p-6 rounded-[24px] transition-all flex flex-col items-center justify-center gap-1 border-2 h-36 ${
+                    className={`relative p-3 rounded-[15px] transition-all flex flex-col items-center justify-center gap-0 border-2 h-20 ${
                       selectedZone === zone.id 
-                        ? `bg-slate-900 border-slate-900 text-white shadow-2xl shadow-slate-900/40 scale-105 z-10` 
-                        : 'bg-white border-slate-50 hover:border-slate-200'
+                        ? `bg-slate-900 border-slate-900 text-white shadow-md z-10` 
+                        : 'bg-white border-slate-100 hover:border-slate-200'
                     }`}
                   >
-                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${selectedZone === zone.id ? 'text-blue-300' : 'text-slate-300'}`}>
+                    <p className={`text-[7px] font-black uppercase tracking-[0.2em] leading-none mb-1.5 ${selectedZone === zone.id ? 'text-blue-300' : 'text-slate-300'}`}>
                       {zone.id}
                     </p>
-                    <p className={`text-4xl font-extrabold ${selectedZone === zone.id ? 'text-white' : 'text-slate-900'}`}>{zone.count}</p>
-                    <p className={`text-[8px] font-bold uppercase tracking-widest mt-2 ${selectedZone === zone.id ? 'text-white/40' : 'text-slate-400'}`}>Connected Stores</p>
+                    <p className={`text-xl font-black leading-none ${selectedZone === zone.id ? 'text-white' : 'text-slate-900'}`}>{zone.count}</p>
+                    <p className={`text-[6px] font-black uppercase tracking-widest mt-1 ${selectedZone === zone.id ? 'text-white/30' : 'text-slate-400'}`}>Stores</p>
                   </button>
                 ))}
               </div>
 
-              <button 
-                onClick={handleDownloadManifest}
-                disabled={isDownloading}
-                className="w-full mt-8 h-16 bg-[#1b2a4a] text-white rounded-2xl font-bold hover:shadow-2xl hover:shadow-slate-900/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs disabled:opacity-50 group"
+              <div className="mt-5 flex-shrink-0">
+                <button 
+                  onClick={handleDownloadManifest}
+                  disabled={isDownloading}
+                  className="w-full h-9 bg-slate-900 text-white rounded-[10px] font-black text-[9px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 active:scale-95"
+                >
+                  {isDownloading ? (
+                    '...'
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      Manifest
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-[18px] p-4 text-white shadow-lg relative overflow-hidden flex-shrink-0">
+               <ShieldCheck className="w-6 h-6 mb-2.5 opacity-40" />
+               <p className="text-[8px] font-black leading-tight uppercase tracking-widest">Logistics Health: Verified</p>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white rounded-[18px] overflow-hidden shadow-sm border border-slate-200/60 flex flex-col">
+            <div className="p-4 px-6 border-b border-slate-50 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-base font-black text-[#1b2a4a] tracking-tight leading-none uppercase">
+                  {selectedZone ? `${selectedZone} Demand` : 'Global Hub Demand'}
+                </h2>
+                <div className="flex items-center gap-1 mt-1.5">
+                   <Activity className="w-2.5 h-2.5 text-emerald-500" />
+                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Synced Feed</span>
+                </div>
+              </div>
+              <button
+                onClick={handleBatchApprove}
+                disabled={filteredRequests.every(s => processingStatus[s.id])}
+                className="h-8 px-4 bg-[#ff6900] text-white rounded-[10px] font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md active:scale-95 disabled:opacity-50"
               >
-                {isDownloading ? (
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                    Download Dispatch Manifest
-                  </>
-                )}
+                Approve All
               </button>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden group">
-               <ShieldCheck className="w-10 h-10 mb-6 group-hover:rotate-12 transition-transform" />
-               <h3 className="text-xl font-bold mb-2 tracking-tight">System Integrity</h3>
-               <p className="text-white/70 text-sm leading-relaxed mb-6 font-medium">Auto-fulfillment mode is active. Orders are queued for logistics review based on zone density.</p>
-               <div className="flex items-center gap-2 px-4 py-2 bg-black/10 rounded-xl w-fit border border-white/10">
-                 <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                 <span className="text-[10px] font-black uppercase tracking-widest">HQ Real-Time Active</span>
-               </div>
-            </div>
-          </div>
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="bg-slate-50/80 px-6 py-2 border-b border-slate-100 grid grid-cols-[1fr_80px_80px_100px] gap-3 items-center flex-shrink-0">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Origin</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Zone</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Units</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-right pr-2">Action</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-50 custom-scrollbar">
+                {filteredRequests.map((shop) => (
+                  <div key={shop.id} className="px-6 py-2 hover:bg-slate-50/50 transition-all group grid grid-cols-[1fr_80px_80px_100px] gap-3 items-center">
+                     <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[#ff6900] shadow-sm flex-shrink-0 group-hover:bg-orange-50 transition-colors">
+                          <Truck className="w-4 h-4 opacity-70" />
+                        </div>
+                        <p className="font-bold text-slate-900 text-xs truncate leading-none">{shop.shop}</p>
+                     </div>
+                     
+                     <div>
+                        <p className="font-black text-slate-900 text-[10px] uppercase leading-none">{shop.zone}</p>
+                     </div>
 
-          <div className="space-y-6">
-            <div className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-gray-100">
-              <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gradient-to-r from-white to-slate-50">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#1b2a4a] tracking-tight">
-                    {selectedZone ? `${selectedZone} Zone Orchestration` : 'Aggregated Demand Stream'}
-                  </h2>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <Activity className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Synchronized Feed</span>
+                     <p className="font-black text-slate-900 text-xs leading-none">+{shop.units}</p>
+
+                     <div className="flex justify-end pr-1">
+                      <button
+                        onClick={() => handleAction(shop.id)}
+                        disabled={!!processingStatus[shop.id]}
+                        className={`h-7 w-full rounded-[8px] font-black text-[8px] uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1 ${
+                          processingStatus[shop.id] === 'done'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : processingStatus[shop.id] === 'loading'
+                            ? 'bg-slate-100 text-slate-300 cursor-wait'
+                            : 'bg-white border text-slate-900 hover:border-[#ff6900] hover:text-[#ff6900]'
+                        }`}
+                      >
+                        {processingStatus[shop.id] === 'done' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        ) : (
+                          <>
+                            {processingStatus[shop.id] === 'loading' ? '...' : 'Fulfill'}
+                            <ArrowRight className="w-3 h-3" />
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-                </div>
-                <button
-                  onClick={handleBatchApprove}
-                  disabled={filteredRequests.every(s => processingStatus[s.id])}
-                  className="h-14 px-8 bg-[#ff6900] text-white rounded-2xl font-bold hover:shadow-xl hover:shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-widest text-xs"
-                >
-                  Bulk Approve Zone
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50/80 border-b border-slate-100">
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Origin Outlet</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Sector</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Replenish</th>
-                      <th className="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {filteredRequests.map((shop) => (
-                      <tr key={shop.id} className="hover:bg-slate-50/50 transition-all group">
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-[#ff6900] shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
-                                <Truck className="w-6 h-6" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 text-base">{shop.shop}</p>
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-mono italic">{shop.id} • {shop.time}</span>
-                              </div>
-                           </div>
-                        </td>
-                        <td className="px-8 py-6">
-                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                              <span className="w-2 h-2 rounded-full bg-[#ff6900]"></span>
-                              <p className="font-bold text-slate-900 text-sm">{shop.zone}</p>
-                           </div>
-                        </td>
-                        <td className="px-8 py-6">
-                           <p className="font-extrabold text-slate-900 text-lg">+{shop.units}</p>
-                           <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Units</p>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <button
-                            onClick={() => handleAction(shop.id)}
-                            disabled={!!processingStatus[shop.id]}
-                            className={`h-11 px-6 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm inline-flex items-center gap-2 ${
-                              processingStatus[shop.id] === 'done'
-                                ? 'bg-emerald-50 text-emerald-600 border-2 border-emerald-100 overflow-hidden'
-                                : processingStatus[shop.id] === 'loading'
-                                ? 'bg-slate-100 text-slate-400 cursor-wait'
-                                : 'bg-white border-2 border-slate-100 text-[#1b2a4a] hover:border-[#ff6900] hover:text-[#ff6900]'
-                            }`}
-                          >
-                            {processingStatus[shop.id] === 'done' ? (
-                              <>
-                                <CheckCircle2 className="w-4 h-4" />
-                                Done
-                              </>
-                            ) : (
-                              <>
-                                {processingStatus[shop.id] === 'loading' ? 'Syncing' : 'Fulfill'}
-                                <ArrowRight className="w-4 h-4" />
-                              </>
-                            )}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                ))}
               </div>
             </div>
           </div>
-
         </div>
       )}
     </div>
