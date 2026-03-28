@@ -22,6 +22,7 @@ import {
   getOutlets,
   requestForecastGeneration,
 } from '../../lib/forecastingData';
+import { getStoredAdminLocation } from '../../lib/adminLocation';
 import { 
   TrendingUp, AlertCircle, AlertTriangle, Package, Truck, 
   RefreshCw, ChevronRight, BarChart3, PieChart, 
@@ -29,8 +30,9 @@ import {
 } from 'lucide-react';
 
 export default function AIForecasting() {
+  const adminLocation = getStoredAdminLocation();
   const [outlets, setOutlets] = useState<{id: number, name: string}[]>([]);
-  const [currentOutletId, setCurrentOutletId] = useState<number | null>(null);
+  const [currentOutletId, setCurrentOutletId] = useState<number | null>(adminLocation.outletId);
   const [summary, setSummary] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [trajectoryData, setTrajectoryData] = useState<any[]>([]);
@@ -51,7 +53,11 @@ export default function AIForecasting() {
         const data = await getOutlets();
         if (cancelled) return;
         setOutlets(data);
-        setCurrentOutletId((current) => current ?? data[0]?.id ?? null);
+        setCurrentOutletId((current) => {
+          if (current) return current;
+          const preferredOutlet = data.find((outlet) => outlet.id === adminLocation.outletId);
+          return preferredOutlet?.id ?? data[0]?.id ?? null;
+        });
       } catch (e) {
         if (cancelled) return;
         console.error('Error fetching outlets', e);

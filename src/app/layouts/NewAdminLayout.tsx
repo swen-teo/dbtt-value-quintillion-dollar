@@ -2,10 +2,12 @@ import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Home, DollarSign, TrendingUp, Truck, ShoppingCart, LayoutDashboard } from 'lucide-react';
 import svgPaths from '../../imports/svg-kqu6c8wr23';
 import imgImageValu from 'figma:asset/dd263ea74eea751edbe19c75046ad4c686cd593c.png';
+import { getStoredAdminLocation } from '../lib/adminLocation';
 
 export default function NewAdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const adminLocation = getStoredAdminLocation();
 
   const isActive = (path: string) => {
     return location.pathname.includes(path);
@@ -126,8 +128,8 @@ export default function NewAdminLayout() {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-sm text-[#364153]">Valu$ 6767</p>
-              <p className="font-medium text-xs text-[#155dfc]">Trade Prime</p>
+              <p className="font-medium text-sm text-[#364153]">Valu$ {adminLocation.code}</p>
+              <p className="font-medium text-xs text-[#155dfc]">{adminLocation.outletShortName}</p>
             </div>
           </div>
           <div

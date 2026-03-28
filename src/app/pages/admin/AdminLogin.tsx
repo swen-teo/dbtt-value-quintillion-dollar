@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Lock, Mail, Shield, ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { resolveAdminLocation, storeAdminLocation } from '../../lib/adminLocation';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ export default function AdminLogin() {
     sessionStorage.setItem('adminId', data.id);
     sessionStorage.setItem('adminName', data.name);
     sessionStorage.setItem('adminRole', data.role);
+    sessionStorage.setItem('adminEmail', email);
+
+    const location = resolveAdminLocation(email);
+    storeAdminLocation(location);
     navigate('/admin/dashboard');
   };
 
