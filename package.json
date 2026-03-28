@@ -6,7 +6,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "start": "pip install -q -r forecasting_service/requirements.txt && python forecasting_service/init_db.py && concurrently -n FLASK,VITE -c yellow,cyan \"python forecasting_service/app.py\" \"npm run dev\""
+    "start": "npm run dev",
+    "web:start": "npm run dev",
+    "forecast:seed": "pip3 install -q -r forecasting_service/requirements.txt && python3 forecasting_service/seed_supabase.py",
+    "legacy:start": "pip3 install -q -r forecasting_service/requirements.txt && concurrently -n WORKER,VITE -c yellow,cyan \"python3 forecasting_service/app.py\" \"npm run dev\""
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -41,6 +44,7 @@
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
     "canvas-confetti": "1.9.4",
+    "@supabase/supabase-js": "^2.56.1",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
     "class-variance-authority": "0.7.1",

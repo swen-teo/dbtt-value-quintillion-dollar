@@ -70,11 +70,15 @@ export default function OrderTracking() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-100 text-orange-800';
       case 'confirmed':
         return 'bg-blue-100 text-blue-800';
+      case 'preparing': // Order Preparing
+        return 'bg-purple-100 text-purple-800';
       case 'ready':
         return 'bg-green-100 text-green-800';
+      case 'collected':
+        return 'bg-blue-100 text-blue-800';
       case 'completed':
         return 'bg-gray-100 text-gray-800';
       case 'cancelled':
@@ -89,10 +93,13 @@ export default function OrderTracking() {
       case 'pending':
         return <Clock className="w-5 h-5" />;
       case 'confirmed':
-      case 'ready':
         return <CheckCircle className="w-5 h-5" />;
-      case 'completed':
+      case 'preparing':
         return <Package className="w-5 h-5" />;
+      case 'ready':
+        return <MapPin className="w-5 h-5" />;
+      case 'completed':
+        return <CheckCircle className="w-5 h-5" />;
       case 'cancelled':
         return <XCircle className="w-5 h-5" />;
       default:
@@ -213,7 +220,7 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          ['confirmed', 'ready', 'completed'].includes(order.status)
+                          ['confirmed', 'preparing', 'ready', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
@@ -223,7 +230,17 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          ['ready', 'completed'].includes(order.status)
+                          ['preparing', 'ready', 'completed'].includes(order.status)
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
+                        }`}>
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-sm text-[#6a7282]">Order Preparing</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          ['ready', 'collected', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
@@ -233,13 +250,13 @@ export default function OrderTracking() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          order.status === 'completed'
+                          ['collected', 'completed'].includes(order.status)
                             ? 'bg-green-500'
                             : 'bg-gray-300'
                         }`}>
                           <CheckCircle className="w-3 h-3 text-white" />
                         </div>
-                        <span className="text-sm text-[#6a7282]">Completed</span>
+                        <span className="text-sm text-[#6a7282]">Collected</span>
                       </div>
                     </div>
                   </div>
