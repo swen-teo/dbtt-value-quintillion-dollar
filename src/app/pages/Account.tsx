@@ -264,6 +264,11 @@ export default function Account() {
 
                         <button 
                           onClick={async () => {
+                            if (recurringOrders.length > 0) {
+                              alert('You cannot cancel Trade Prime while you have active recurring orders. Please cancel all recurring orders first in the "Recurring Orders" tab.');
+                              return;
+                            }
+                            
                             const newTier = 'standard';
                             setCustomer({ ...customer, membershipTier: newTier });
                             sessionStorage.setItem('accountType', newTier);
@@ -272,7 +277,7 @@ export default function Account() {
                             sessionStorage.removeItem('grabEmail');
                             setIsGrabLinked(false);
                             
-                            // Update DB
+                            // Update DB if customerId exists
                             const customerId = sessionStorage.getItem('customerId');
                             if (customerId) {
                               try {
