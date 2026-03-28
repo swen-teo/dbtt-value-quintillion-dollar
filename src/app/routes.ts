@@ -15,6 +15,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Deals from "./pages/Deals";
 import AutoPay from "./pages/AutoPay";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import SubscribePrime from "./pages/SubscribePrime";
 
 import Dashboard from "./pages/admin/Dashboard";
 import OrderManagement from "./pages/admin/OrderManagement";
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { path: "orders", Component: OrderTracking },
       { path: "auto-pay", Component: AutoPay },
       { path: "deals", Component: Deals },
+      { path: "subscribe-prime", Component: SubscribePrime },
     ],
   },
   {
