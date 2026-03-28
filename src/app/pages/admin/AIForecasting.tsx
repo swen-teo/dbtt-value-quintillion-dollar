@@ -22,6 +22,7 @@ import {
   getOutlets,
   requestForecastGeneration,
 } from '../../lib/forecastingData';
+import { getStoredAdminLocation } from '../../lib/adminLocation';
 import { 
   TrendingUp, AlertCircle, AlertTriangle, Package, Truck, 
   RefreshCw, ChevronRight, BarChart3, PieChart, 
@@ -29,8 +30,9 @@ import {
 } from 'lucide-react';
 
 export default function AIForecasting() {
+  const adminLocation = getStoredAdminLocation();
   const [outlets, setOutlets] = useState<{id: number, name: string}[]>([]);
-  const [currentOutletId, setCurrentOutletId] = useState<number | null>(null);
+  const [currentOutletId, setCurrentOutletId] = useState<number | null>(adminLocation.outletId);
   const [summary, setSummary] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [trajectoryData, setTrajectoryData] = useState<any[]>([]);
@@ -41,6 +43,9 @@ export default function AIForecasting() {
   const [generateStatus, setGenerateStatus] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const jobPollRef = useRef<number | null>(null);
+  const visibleOutlets = adminLocation.outletId
+    ? outlets.filter((outlet) => outlet.id === adminLocation.outletId)
+    : outlets;
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +56,11 @@ export default function AIForecasting() {
         const data = await getOutlets();
         if (cancelled) return;
         setOutlets(data);
-        setCurrentOutletId((current) => current ?? data[0]?.id ?? null);
+        setCurrentOutletId((current) => {
+          if (current) return current;
+          const preferredOutlet = data.find((outlet) => outlet.id === adminLocation.outletId);
+          return preferredOutlet?.id ?? data[0]?.id ?? null;
+        });
       } catch (e) {
         if (cancelled) return;
         console.error('Error fetching outlets', e);
@@ -233,14 +242,29 @@ export default function AIForecasting() {
           </div>
           <div className="flex items-center gap-4">
             {connectionError && <p className="text-red-500 font-bold text-sm">{connectionError}</p>}
-            <select 
-              value={currentOutletId || ''} 
-              onChange={e => setCurrentOutletId(Number(e.target.value))}
-              className="px-4 py-3 border-2 border-[#1B2A4A] rounded-xl font-bold text-[#1B2A4A] bg-white shadow-sm focus:outline-none focus:border-orange-500 hover:bg-gray-50 transition-colors"
-            >
-              <option value="" disabled>{connectionError ? 'Backend Offline' : 'Loading Outlets...'}</option>
-              {outlets.map((o: any) => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
+            {visibleOutlets.length > 1 ? (
+              <select
+                value={currentOutletId || ''}
+                onChange={(e) => setCurrentOutletId(Number(e.target.value))}
+                className="px-4 py-3 border-2 border-[#1B2A4A] rounded-xl font-bold text-[#1B2A4A] bg-white shadow-sm focus:outline-none focus:border-orange-500 hover:bg-gray-50 transition-colors"
+              >
+                <option value="" disabled>
+                  {connectionError ? 'Backend Offline' : 'Loading Outlets...'}
+                </option>
+                {visibleOutlets.map((o: any) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="px-4 py-3 border-2 border-[#1B2A4A] rounded-xl bg-white shadow-sm">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">Assigned Outlet</p>
+                <p className="text-base font-extrabold text-[#1B2A4A]">
+                  {visibleOutlets[0]?.name || adminLocation.outletLabel}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
